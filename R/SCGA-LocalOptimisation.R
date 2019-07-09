@@ -27,7 +27,7 @@ LocalOptimisation <- function(control,feat,newPop,y,active,evaluations,sigma,res
 
   }
 
-  browser()
+
 
 
   # res=optimx::optimx(par=startPoint,objLocal,method = c("L-BFGS-B","CG"),lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),itnmax=1000,...)

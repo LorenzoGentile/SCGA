@@ -164,8 +164,7 @@ MutateCatDF <- function(x,i,feature,row,sigmas,createFun,report,...){
 MutateRepDF <- function(x, i, feature, row,sigmas,createFun,...) {
 
   x[row, "value"] <- mutateIntegerValueDF (x[row, "value"] , i, feature,sigmas,X=x,row=row)
-  # if( is.na(x[row, "value"]))
-  #   browser()
+
   diff <- x[row, "value"] - length(which(x[,"prec"] == x[row, "id"]))
 
   if (diff < 0) {

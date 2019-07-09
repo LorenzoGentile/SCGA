@@ -19,7 +19,7 @@ Multipopulation <- function(initList,...){
     ####### Update output #################################################################################################
     evaluations           <- evaluations + sum( purrr::map(out,"evaluations") %>% as.integer() )
     best                  <- min(purrr::map(out,"ybest") %>% as.numeric())
-   browser()
+
     #result$NAs[generations]           <- sum( purrr::map(out,"NAs") %>%unlist() )
     result$NAs[generations] =0         #################### to change##########################
     best                              <- min(purrr::map(out,"ybest") %>% as.numeric())
@@ -55,7 +55,7 @@ Multipopulation <- function(initList,...){
 
   }
   ########## Finalize the output ############################################################################################
-  browser()
+
   result$evaluations      <- evaluations
   result$exitMessage      <- "Optimisation did not exceeded maximum function evaluations"
   result$control          <- control

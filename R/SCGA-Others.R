@@ -155,12 +155,10 @@ selectpoolTournament<- function(fitness,size = (floor(length(fitness) / 2) + 1),
 
   newpool=matrix(ncol=2,nrow=size)
   for (i in 1:size){
-    count=0
+
     newpool[i,1] =tourselection(fitness,tsize)
     while ( is.na(newpool[i,2])) {
-      count=count+1
-      if(count>200)
-        browser()
+
       newpool[i,2] =tourselection(fitness[-newpool[i,1]],tsize)
       # newpool[i,2]=ifelse(newpool[i,1]<newpool[i,2] ,newpool[i,2]+1,newpool[i,2])
       if(newpool[i,2]==newpool[i,1])
