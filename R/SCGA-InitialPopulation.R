@@ -13,7 +13,9 @@ createCandidate <- function(X,feature,...){
   x = NULL
   set.seed(X)
 
-notdependent = purrr::map(feature,"dependent") %>% is.na %>% which
+notdependent = purrr::map(feature,"dependent") %>% unlist  %>% as.numeric
+
+notdependent = notdependent[!is.na(notdependent)]
 
 
 
