@@ -4,13 +4,13 @@ CreateFeature <- function( bounds, condOfExcistance = NULL,dependence=NULL, othe
   if(!is.null(bounds$lower) && !is.null(bounds$upper)){
 
     if(is.null(types))
-      types <- rep("real", length(bounds$lower))
+      types <- rep("numeric", length(bounds$lower))
 
     bounds <- mapply(TreatBounds, bounds$lower,bounds$upper, types ,SIMPLIFY = FALSE)
   }
 
   if(is.null(types))
-    types <- rep("real", length(bounds))
+    types <- rep("numeric", length(bounds))
 
   if(is.null(dependence))
     dependence <- rep(NA, length(bounds))

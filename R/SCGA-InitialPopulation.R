@@ -1,5 +1,5 @@
 
-createPopulation <- function(feature,size,createCandidate=createCandDF,cl=NULL,...){
+createPopulation <- function(feature,size,createCandidate=createCandidate,cl=NULL,...){
 
 if(is.null(cl))
   pop <- lapply(X=floor(runif(size,min=0,max=1e6)), FUN=createCandidate,feature=feature,newCand=TRUE,...)
@@ -9,22 +9,23 @@ else
 }
 
 createCandidate <- function(X,feature,...){
+
   x = NULL
   set.seed(X)
-NAs= getValues(feature,name="dependent",Unique = F)
-NAs[!is.na(NAs)]
-dependent=str2vec(NAs[!is.na(NAs)])
-notdependent=setdiff(1:length(feature),dependent)
+
+notdependent = purrr::map(feature,"dependent") %>% as.numeric()
+notdependent <- which(is.na(notdependent))
+
 
   for ( i in notdependent){
-    
+
     x <- rbind(x,createDepDF(feature,i,id=max(0,nrow(x))+1,xDone=x,...))
   }
   return(x)
 }
 
  createDepDF <- function(feature, i, id, prec = NA, x = NULL, xDone=NULL, addnames = NULL, newCand=FALSE,...) {
-   
+
   names = c("value", "feature", "prec", "id", addnames)
   x = matrix(c(NA, i, prec, id, rep(NA, length(names) - 4)), 1, length(names))
   colnames(x) <- names
@@ -41,7 +42,7 @@ notdependent=setdiff(1:length(feature),dependent)
   }
 
   bounds <- feature[[i]]$bound(x=rbind(xDone,x), id=id,newCand=newCand)
-  
+
   if (feature[[i]]$type == "numeric") {
     x[, "value"] = runif(1, bounds[1], bounds[2])
   } else if (feature[[i]]$type == "dummy") {
@@ -66,7 +67,7 @@ notdependent=setdiff(1:length(feature),dependent)
         create=feature[[i]]$condOfExistence(dependent=feature[[i]]$dependent[j],x=rbind(xDone,x))
         if(is.na(create)|| x[, "value"]==create ){
         x <-
-          rbind(x,createDepDF(  feature = feature,  i = feature[[i]]$dependent[j],  id = id + 1,  
+          rbind(x,createDepDF(  feature = feature,  i = feature[[i]]$dependent[j],  id = id + 1,
                                 prec = x[1, "id"],  xDone=rbind(xDone,x),  addnames=addnames,newCand = TRUE))
         id = max(0, x[, "id"])
         }

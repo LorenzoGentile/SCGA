@@ -100,10 +100,10 @@ evaluatePopDF <- function(Fun, x, vectorOnly=FALSE, vectorized=FALSE, SAPPLY, ..
   else if (vectorized && !vectorOnly )
     y <- Fun(x,...)
 
-  else if (!vectorized && vectorOnly )
+  else if (!vectorized && !vectorOnly )
     y <- SAPPLY( X = x,Fun,...)
 
-  else if (!vectorized && !vectorOnly )
+  else if (!vectorized && vectorOnly )
     y <- SAPPLY( X = x[1:length(x)][,"value"], Fun,...)
 
   return(y)
@@ -238,7 +238,6 @@ initSigma <- function(feat,donttouch){
 
 
   tau <- updateTau(nVar)
-
   bounds <- sapply(active, function(i) feature[[i]]$bound(),simplify = FALSE)
   # bounds <- apply(as.matrix(active), 1,getBounds)
   boundsCorr <- matrix(0,length(active),2)
@@ -284,3 +283,31 @@ updateTau<- function(nVar){
   return(tau)
 }
 
+str2vec <- function(str1){
+  return(as.integer(unlist(strsplit(str1, ","))))
+
+}
+
+getValues <- function(x, name="label", Unique = TRUE,forC=NA) {
+  # return the values checkingg recursevely in the list
+
+  if (is.na(forC)) {
+    if (name == "value") {
+      Unique <- FALSE
+      out <-
+        unname(as.numeric(unlist(x)[which(grepl(name, names(unlist(x))))]))
+    } else {
+      if (Unique)
+        out <-
+          unique(unname(unlist(x)[which(grepl(name, names(unlist(x))))]))
+      else
+        out <- unname(unlist(x)[which(grepl(name, names(unlist(x))))])
+    }
+
+  } else{
+    out <-
+      any(unique(unname(unlist(x)[which(grepl(name, names(unlist(x))))])) == forC)
+  }
+
+  return(unlist(out))
+}

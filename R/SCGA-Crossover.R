@@ -235,3 +235,28 @@ CrossSigma <- function(toCross,sigma,feature,fitness){
 
   return(ret)
 }
+
+CrossDF<-function(x,toSelect){
+  archive=NULL
+  while (!bazar::is.empty(toSelect)) {
+    nextToSelect <- x[which(x[, "prec"] %in% toSelect), "id"]
+    archive <- c(archive,toSelect)
+    toSelect <- nextToSelect
+  }
+  return(archive)
+
+}
+
+CrossDFRet<-function(x,toSelect){
+
+  archive=NULL
+  while (!anyNA(toSelect)) {
+    nextToSelect <- x[which(x[,"id"]%in%toSelect),"prec"]
+    archive <- unique(c(archive,toSelect))
+    toSelect <- nextToSelect
+  }
+  return(archive)
+
+}
+
+

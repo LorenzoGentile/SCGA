@@ -1,12 +1,12 @@
 Package: SCGA
 Type: Package
-Title: Optimisation genetic algorithm for for variable-sized problems
+Title: Genetic Algorithm for for structured and variable-sized problems
 Version: 0.1.0
 Author: Lorenzo Gentile
 Maintainer: Lorenzo Gentile <lorenzo.gentile@th-koeln.de>
 Description: This optimiser allows you to specify a hierarchy in the chromosomes
-in order to have solutions of different length and perform more meaningfull operations.
-The optimisers treats differently continous, integers and categorical variables. 
+              in order to have solutions of different length and perform more meaningfull operations.
+              The optimisers treats differently continous, integers and categorical variables. 
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true

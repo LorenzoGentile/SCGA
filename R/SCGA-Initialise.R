@@ -3,6 +3,12 @@ Initialise <-
     control = list(),
     ...) {
 
+    require(bazar)
+    require(tictoc)
+    require(SPOT)
+    require(purrr)
+    require(ggplot2)
+    require(parallel)
 
     ########## Initialise Control ########################################################################################################################################################
 
@@ -13,7 +19,7 @@ Initialise <-
       budgetTot               = 1,
       convergence             = 0.001,                    # diffenrence between target and current best
       cpus                    = NA,
-      createCandFun           = NULL,                     # function used to create the candidate
+      createCandFun           = createCandidate,          # function used to create the candidate
       createMutFun            = NewValueMutation,     # function used in the mutation
       crossFun                = CrossOperation,
       dontChangeCross         = NULL,                     # feature that don' t have to be used in crossover and mutation
