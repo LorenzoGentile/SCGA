@@ -1,0 +1,246 @@
+Initialise <-
+  function(
+    control = list(),
+    ...) {
+
+
+    ########## Initialise Control ########################################################################################################################################################
+
+    cat(paste0(" \n the seed is ",control$seed) )
+
+    #initializatio of hyperparatmeter for Optimization
+    con <- list(
+      budgetTot               = 1,
+      convergence             = 0.001,                    # diffenrence between target and current best
+      cpus                    = NA,
+      createCandFun           = NULL,                     # function used to create the candidate
+      createMutFun            = NewValueMutation,     # function used in the mutation
+      crossFun                = CrossOperation,
+      dontChangeCross         = NULL,                     # feature that don' t have to be used in crossover and mutation
+      dontChangeMut           = NULL,                      # feature that don' t have to be used in crossover and mutation
+      elitism                 = NULL,
+      evaluateFN              = evaluatePopDF,            # Default evaluation function
+      feature                 = NULL,
+      fitnessFN               = assignFitnessRank,        # Default evaluation function
+      Fun                     = NULL,
+      #maxStallGenerastions  = maxGenerations             # maximum number of iterations without improvement
+      job                     = NULL,
+      keep                    = NULL,                     # vector of fields that don't have to be touched
+      #localOptGenerations    = maxGenerations
+      maxChange               = 1,                        # ratio between the number of chromosome to corssover and the half of the avarege length of the candidates
+      maxEvaluations          = NULL,
+      maxGenerations          = NULL,
+      multiPopulation         = FALSE,
+      # multiPopControl       = NULL,
+      mutRate                 = 0.8,                      # likelihood to perform mutation
+      mutationReport          = FALSE,
+      parallel                = FALSE,                     # parallelize the evaluation of the objective function
+      plotCross               = FALSE,
+      plotCrossR              = FALSE,
+      plotEvolution           = FALSE,                     # Print evolution of bests
+      plotPopulation          = FALSE,
+      plotSigma               = FALSE,                     # Print maximum values of sigmas
+      plotInterval            = 1,
+      popCreateFun            = createPopulation,         # function used to create the initial population
+      printIter               = TRUE,
+      printSigma              = FALSE,
+      printXMin               = FALSE,
+      printPlot               = FALSE,
+      probability             = NULL,
+      repairCross             = NULL,
+      repairFun               = NULL,
+      repairMutation          = NULL,
+      resume                  = FALSE,
+      resumeFrom              = NULL,
+      saveIter                = FALSE,
+      saveSigma               = FALSE,
+      saveX                   = FALSE,
+      seed                    = sample(1e6, 1),
+      selection               = selectPoolRouletteWheel,
+      size                    = 30,                       # Size of population
+      target                  = -Inf,                     # best value achievable
+      tournamentSize          = 6,
+      updateSigma             = FALSE,
+      useCrossover            = TRUE,
+      vectorOnly              = FALSE,                    # pass only the values to the obj
+      vectorized              = FALSE,                    # the obj accepts all the candidates togheter
+      x                       = NULL
+    )
+
+    con[names(control)] <- control
+    control <- con
+    rm ("con")
+
+    if (is.null(control$elitism))
+      control$elitism  <- floor(control$size * 0.075 + 1)
+    control$toEval     <- (control$elitism + 1): control$size
+    control$sizeToEval <- length(control$toEval)
+
+    if (!is.null(control$maxGenerations) & !is.null(control$maxEvaluations) ){
+      control$maxEvaluations <- min(control$maxEvaluations,control$size+(control$maxGenerations-1)*(control$size-control$elitism))
+      cat("\n Both maxGenerations and maxEvaluations provided.The minimum will be used \n")
+
+      # } else if(is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
+      #   control$maxGenerations <- floor(control$maxEvaluations/(control$size-control$elitism))
+    } else if ( is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
+      control$maxGenerations  <- 1 + (control$maxEvaluations - control$size) %/% length(control$toEval)
+    } else if (is.null(control$maxGenerations) & is.null(control$maxEvaluations) )
+      stop("Provide maxGenerations or maxEvaluations")
+
+
+    if(is.null(control$maxStallGenerations))
+      control$maxStallGenerations       <- Inf
+
+    if(is.null(control$localOptGenerations))
+      control$localOptGenerations      <-  Inf
+
+    ########## multiPopulation  ###########################################################################################################
+    if(control$multiPopulation){
+      if(is.null(control$multiPopControl))
+        control$multiPopControl                    <- list()
+
+      if(is.null(control$multiPopControl$migrationType))
+        control$multiPopControl$migrationType      <- "evaluation"
+
+      if(is.null(control$multiPopControl$multiPopStrategy))
+        control$multiPopControl$multiPopStrategy   <- populationStrategyParallel
+
+      if(is.null(control$multiPopControl$nMigrations))
+        control$multiPopControl$nMigrations        <- control$elitism
+
+      if(is.null(control$multiPopControl$nPopulations)){
+
+        if(!control$parallel){
+          control$multiPopControl$nPopulations      <- 2
+
+        }else if(control$parallel)
+          control$multiPopControl$nPopulations      <- control$cpus
+
+      }
+      if(is.null(control$multiPopControl$migrationInterval)){
+        if(control$multiPopControl$migrationType == "generation")
+          control$multiPopControl$migrationInterval <- control$maxGenerations %/% 10
+        else
+          control$multiPopControl$migrationInterval <- (control$maxEvaluations/control$multiPopControl$nPopulations) %/% 10
+      }
+    }
+    ########## Initialise other #############################################################################################################
+
+    feature                                     <- control$feature                                              # Initialise #
+    Fun                                         = control$Fun                                                   # Initialise #
+    control$dontChange                          <- union(control$dontChangeMut, control$dontChangeCross)
+    stallinFlag                                 <- FALSE                                                        # Initialise #
+    media                                       <- NULL
+    stalling <-  ws <- evaluations              <- 0
+    generations                                 <- 1
+    best                                        <- Inf
+
+
+    set.seed(control$seed, kind = "Mersenne-Twister", normal.kind = "Inversion")                               # set.seed
+
+    if (is.null(feature))                                                                                      # Check feature
+      stop("feature is not provided")                                                                          # Check feature
+    else if (is.function(feature))                                                                             # Check feature
+      feature <- feature()
+
+    if (control$parallel) {                                                                                    # Cluster Settings
+      print("setting up the cluster ")                                                                         # Cluster Settings
+      cltype                           <- ifelse(.Platform$OS.type != "windows", "FORK", "PSOCK")              # Cluster Settings
+      cpus                             <- min(detectCores() - 1, control$cpus, na.rm = TRUE)                   # Cluster Settings
+      cl                               <- makeCluster(cpus, type = cltype)                                     # Cluster Settings
+      # Cluster Settings
+      clusterExport(cl, varlist = "Fun", envir = environment())                                                # Cluster Settings
+      #clusterEvalQ(cl, "orbit2R")                                                                             # Cluster Settings
+      clusterEvalQ(cl, "bazar")                                                                                # Cluster Settings
+      print(paste0("loaded cluster: - ",cpus," - nodes"))                                                      # Cluster Settings
+    } else                                                                                                     # Cluster Settings
+      cl     <-  NULL
+
+
+
+    if (!is.null(control$dontChange)){
+      active  <- as.numeric(setdiff(getValues(x = feature, name = "label", Unique = F),control$dontChange))      # Active feature
+      feat    <- feature[active]                                                                                 # Feature of only Active
+    }else
+      feat  <- feature
+
+    nVar    <-NULL
+    nVar[1]  <- sum(getValues(x=feat, name = "type", Unique = F) == "numeric")
+    nVar[2]  <- sum(getValues(x=feat, name = "type", Unique = F) == "integer")
+    nVar[3]  <- sum(getValues(x=feat, name = "type", Unique = F) == "categorical")
+    nVar[4]  <- sum(getValues(x=feat, name = "type", Unique = F) == "repeater")
+
+    result   <- OptimizerClass(job=control$job,resumeFrom=control$resumeFrom,control)                     # create a result object of class result
+
+
+
+
+
+    if(is.null(cl)){
+      LAPPLY <- lapply
+      APPLY  <- apply
+      SAPPLY <- sapply
+    }
+    else{
+      LAPPLY <- function(...){
+        parLapply(cl,...)
+      }
+      APPLY  <- function(...){
+        parApply(cl,...)
+      }
+
+      SAPPLY <- function(...){
+        parSapply(cl,...)
+      }
+    }
+    mutRate  <- control$mutRate
+
+
+    return(list(
+      APPLY        = APPLY,
+      best         = best,
+      cl           = cl,
+      control      = control,
+      evaluations  = evaluations,
+      feat         = feat,
+      feature      = feature,
+      Fun          = Fun,
+      generations  = generations,
+      LAPPLY       = LAPPLY,
+      media        = media,
+      mutRate      = mutRate,
+      nVar         = nVar,
+      result       = result,
+      SAPPLY       = SAPPLY,
+      stalling     = stalling,
+      stallinFlag  = stallinFlag,
+      ws           = ws
+    )
+    )
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
