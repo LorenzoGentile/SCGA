@@ -15,7 +15,7 @@ createCandidate <- function(X,feature,...){
 
   dependent    <- purrr::map(feature,"dependent") %>% unlist  %>% as.numeric
   dependent    <-  dependent[!is.na(dependent)]
-  notdependent < setdiff(1:length(feature),dependent)
+  notdependent <- setdiff(1:length(feature),dependent)
 
 
   for ( i in notdependent){
