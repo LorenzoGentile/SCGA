@@ -10,14 +10,7 @@ Structured-Chromosome Genetic Algorithm
 Installation
 ------------
 
-You can install the released version of SCGA from Github with:
-
-``` r
-library("devtools")
-install.packages("SCGA")
-```
-
-And the development version from [GitHub](https://github.com/) with:
+You can install the released version of SCGA from [GitHub](https://github.com/) with:
 
 ``` r
 install.packages("devtools")
