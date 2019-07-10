@@ -12,6 +12,7 @@
 #' @param evaluatePopDF function. See \code{\link{evaluatePopDF}}
 #' @param feature. list or function that creates the list. See \code{\link{feature}}
 #' @param fitnessFN function. Receives the observations of the objective functions and returns
+#' @param Fun function. Objective function
 #' a vector of the same length repesententing the fitness. Default is Ranking fitness.
 #'
 #'

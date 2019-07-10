@@ -29,7 +29,9 @@ the known minimum}
 
 \item{feature.}{list or function that creates the list. See \code{\link{feature}}}
 
-\item{fitnessFN}{function. Receives the observations of the objective functions and returns
+\item{fitnessFN}{function. Receives the observations of the objective functions and returns}
+
+\item{Fun}{function. Objective function
 a vector of the same length repesententing the fitness. Default is Ranking fitness.}
 }
 \description{

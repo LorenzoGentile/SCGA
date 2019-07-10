@@ -15,3 +15,6 @@ list
 \description{
 More detailed description
 }
+\examples{
+
+}
