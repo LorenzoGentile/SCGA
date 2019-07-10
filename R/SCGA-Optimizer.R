@@ -1,6 +1,7 @@
 #' Run the SCGA optimisation
 #'
-#' More detailed description
+#' Structured-Chromosome Genetic Algorithm
+#'
 #' @param control list of controls. See \code{\link{Initialise}}
 #'
 #' @return list
