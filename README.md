@@ -5,7 +5,7 @@ SCGA
 
 <!-- badges: start -->
 <!-- badges: end -->
-The goal of SCGA is to ...
+Structured-Chromosome Genetic Algorithm
 
 Installation
 ------------
@@ -20,7 +20,7 @@ install.packages("SCGA")
 And the development version from [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
+install.packages("devtools")
 install_github("LorenzoGentile/SCGA")
 ```
 

@@ -13,7 +13,7 @@ SCGA(control = list(), ...)
 list
 }
 \description{
-More detailed description
+Structured-Chromosome Genetic Algorithm
 }
 \examples{
 

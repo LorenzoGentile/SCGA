@@ -31,7 +31,7 @@ install.packages("SCGA")
 And the development version from [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
+install.packages("devtools")
 install_github("LorenzoGentile/SCGA")
 ```
 Soon a full descrition of the package will be available
