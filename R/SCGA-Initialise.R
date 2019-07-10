@@ -1,3 +1,24 @@
+#' This function returns the default controls and other useful variables.
+#'  Control is a list of the settings:
+#' @param convergence Stopping criterion: absolute difference between the current best and
+#' the known minimum
+#' @param cpus numeric. indicatig number of cores over which parallelise
+#' @param creatCandFun function. See \code{\link{createCandidate}}
+#' @param createMutFun function. See \code{\link{createMutFun}}
+#' @param crossFun function. See \code{\link{crossFun}}
+#' @param dontChangeCross numeric vector. Feature number that not undergo to Crossover
+#' @param dontChangeMut numeric vector. Feature number that not undergo to Mutation
+#' @param elitism numeric. Number of candidates to preserve to the next population. Default is size / 10
+#' @param evaluatePopDF function. See \code{\link{evaluatePopDF}}
+#' @param feature. list or function that creates the list. See \code{\link{feature}}
+#' @param fitnessFN function. Receives the observations of the objective functions and returns
+#' a vector of the same length repesententing the fitness. Default is Ranking fitness.
+#'
+#'
+#'
+#'
+#'
+
 Initialise <-
   function(
     control = list(),

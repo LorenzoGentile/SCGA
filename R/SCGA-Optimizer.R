@@ -1,3 +1,11 @@
+#' Run the SCGA optimisation
+#'
+#' More detailed description
+#' @param control list of controls. See \code{\link{Initialise}}
+#'
+#' @return list
+#' @examples
+#'
 SCGA <-
   function(
     control = list(),

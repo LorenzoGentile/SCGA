@@ -8,6 +8,8 @@ CreateFeature <- function( bounds, condOfExcistance = NULL,dependence=NULL, othe
 
     bounds <- mapply(TreatBounds, bounds$lower,bounds$upper, types ,SIMPLIFY = FALSE)
   }
+  if(is.null(label))
+    label <- 1:length(bounds)
 
   if(is.null(types))
     types <- rep("numeric", length(bounds))
@@ -20,10 +22,11 @@ CreateFeature <- function( bounds, condOfExcistance = NULL,dependence=NULL, othe
 
   if(is.null(others))
     others <- rep(list(NULL), length(bounds))
+
   else if(length(others)!=length(bounds))
     others <-  TreatOthers(others,length(bounds))
 
-  feature <- mapply(CreateFeat, bounds,condOfExcistance,dependence,types, others,SIMPLIFY = FALSE)
+  feature <- mapply(CreateFeat, bounds,condOfExcistance,dependence,label, types, others,SIMPLIFY = FALSE)
 
   return(feature)
 
@@ -60,13 +63,14 @@ TreatOthers <- function(others,dim){
     stop("ERROR: wrong in dimensions of others")
 }
 
-CreateFeat<- function(bounds,condOfExcistance,dependence,types, others){
+CreateFeat<- function(bounds,condOfExcistance,dependence,label,types, others){
 
   feature <- list(
     bound                 = CreateBoundsInt(bounds),
     condOfExistence       = CreateCondOfExcistance(condOfExcistance),
     dependent             = dependence,
-    type                  = types
+    type                  = types,
+    label                 = label
   )
 
   for (i in seq(1,length.out = length(others))) {
