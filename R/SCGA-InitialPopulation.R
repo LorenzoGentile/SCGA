@@ -46,14 +46,14 @@ createCandidate <- function(X,feature,...){
 
   if (feature[[i]]$type == "numeric") {
     x[, "value"] = runif(1, bounds[1], bounds[2])
-  } else if (feature[[i]]$type == "dummy") {
-    x[, "value"] = bounds[1]
-  } else if (feature[[i]]$type == "categorical") {
+
+  }  else if (feature[[i]]$type == "categorical") {
     if(length(bounds)>1)
+
       x[, "value"] = sample(bounds,1)
     else
       x[, "value"] = bounds
-  } else {
+  } else if (feature[[i]]$type %in% c("repeater", "integer")) {
     x[, "value"] = floor(runif(
       1,
       bounds[1],

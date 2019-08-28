@@ -1,4 +1,4 @@
-CreateFeature <- function( bounds, condOfExcistance = NULL,dependence=NULL, others = NULL,types=NULL){
+CreateFeature <- function( bounds, condOfExcistance = NULL,dependence=NULL, label=NULL,types=NULL,others = NULL){
 
 
   if(!is.null(bounds$lower) && !is.null(bounds$upper)){
