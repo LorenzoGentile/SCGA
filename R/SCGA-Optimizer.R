@@ -38,7 +38,7 @@ SCGA <-
     } else {
       ########## else create the population and sigma
 
-      initPopAndSigmaList <- InitPopAndSigma(control,feature,LAPPLY)
+      initPopAndSigmaList <-suppressWarnings( InitPopAndSigma(control,feature,LAPPLY))
       newPop <- initPopAndSigmaList$newPop
       sigma <- initPopAndSigmaList$sigma
       sigma0 <- initPopAndSigmaList$sigma0
@@ -56,7 +56,7 @@ SCGA <-
 
     ####### Start the main loop #################################################################################################
     cat("\n Start optimization loop \n")
-    pb <- progress::progress_bar$new(total = control$maxEvaluations)
+    pb <- progress::progress_bar$new(total = control$maxEvaluations,format = "  optimising [:bar] :percent eta: :eta", clear = TRUE, width= 60)
 
     while (evaluations <= (control$maxEvaluations-control$size+control$elitism) && abs(control$target - best) >= control$convergence ) {
 

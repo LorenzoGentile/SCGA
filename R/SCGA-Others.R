@@ -236,9 +236,10 @@ initSigma <- function(feat,donttouch){
 
 
   tau <- updateTau(nVar)
-  bounds <- sapply(active, function(i) feature[[i]]$bound(),simplify = FALSE)
+  bounds <- sapply(1:length(feat), function(i) feat[[i]]$bound(),simplify = FALSE)
   # bounds <- apply(as.matrix(active), 1,getBounds)
-  boundsCorr <- matrix(0,length(active),2)
+  # boundsCorr <- matrix(0,length(active),2)
+  boundsCorr <- matrix(0,length(feat),2)
   for ( i in active){
     boundsCorr[i,] <- c(min(bounds[[i]]),max(bounds[[i]]))
   }

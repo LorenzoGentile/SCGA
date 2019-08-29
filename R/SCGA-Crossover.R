@@ -182,7 +182,7 @@ modIdPrec <- function(i,id.prec,candidates,toadd,keep){
   add[,c("prec","id")] <- add[,c("prec","id")] + max(candidates[[j]][,"id"]) - min(add[,c("prec","id")],na.rm = TRUE) + 1
   add[1,"prec"]        <- id.prec[1,j]
 
-  for (k in 1:length(keep))
+  for (k in seq(from = 1,length.out=length(keep)))
     add[1,keep[k]]     <- id.prec[(1+k),j]
 
   return(add)
