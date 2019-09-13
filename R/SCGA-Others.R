@@ -92,24 +92,6 @@ InitPopAndSigma <- function(control,feature,LAPPLY){
   ))
 }
 
-evaluatePopDF <- function(Fun, x, vectorOnly=FALSE, vectorized=FALSE, SAPPLY, ...) {
-
-  if(vectorized && vectorOnly )
-    y <- Fun(x[1:length(x)][,"value"],...)
-
-  else if (vectorized && !vectorOnly )
-    y <- Fun(x,...)
-
-  else if (!vectorized && !vectorOnly )
-    y <- SAPPLY( X = x,Fun,...)
-
-  else if (!vectorized && vectorOnly )
-    y <- SAPPLY( X = x[1:length(x)][,"value"], Fun,...)
-
-  return(y)
-
-}
-
 assignFitnessProportional <- function(y, x) {
 
   ## scale the observation between 0 and 1. assigning 1 to the lowest value and 0 to the highest -> Minimization
@@ -309,4 +291,32 @@ getValues <- function(x, name="label", Unique = TRUE,forC=NA) {
   }
 
   return(unlist(out))
+}
+constraintHandlerFun <- function(out,wY,wC,cRef,yElitism=NULL,...){
+
+  y <- out[[1]]
+  con <- out[[2]]
+
+
+
+
+  # if(is.null(wY))
+    wY = max(y,na.rm = T)
+  # else
+  #   wY = max(c(y,wY),na.rm = T)
+
+  # if(is.null(wC))
+    wC = max(con,na.rm = T)
+  # else
+  #   wC = max(c(con,wC),na.rm = T)
+
+  y[is.na(y)] <- wY + (mean(c(y[!is.na(y)],yElitism))) * 0.1
+
+  unfeaseable <- which(cRef <= con)
+  scaledCons  <-  con[unfeaseable]/wC * wY
+  # y[unfeaseable] <- scaledCons + wY
+  y[unfeaseable] <- scaledCons + y[unfeaseable]
+
+  return(list(y=y,wC=wC,wY=wY,constraint=con))
+
 }

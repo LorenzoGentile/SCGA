@@ -1,4 +1,4 @@
-Mutation <- function(APPLY,ChangeMut,cl,control,feature,MutPool,newPop,nVar,sigma,sigma0){
+Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,MutPool,newPop,nVar,sigma,sigma0){
 
   if(control$updateSigma){
 

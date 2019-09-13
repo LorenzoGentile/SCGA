@@ -17,22 +17,34 @@ Multipopulation <- function(initList,...){
 
 
     ####### Update output #################################################################################################
-    evaluations           <- evaluations + sum( purrr::map(out,"evaluations") %>% as.integer() )
-    best                  <- min(purrr::map(out,"ybest") %>% as.numeric())
+    evaluations           <- evaluations +  purrr::map(out,"evaluations") %>% as.integer() %>% sum()
+    best                  <- purrr::map(out,"ybest") %>% as.numeric() %>% min()
 
     #result$NAs[generations]           <- sum( purrr::map(out,"NAs") %>%unlist() )
+
     result$NAs[generations] =0         #################### to change##########################
+
     best                              <- min(purrr::map(out,"ybest") %>% as.numeric())
+
     result$yForResults                <- purrr::map(out,"ybest") %>% as.numeric()
+
     result$ybesthistory[generations]  <- best
-    result$stalling       <- stalling <- generations - which.min(result$ybesthistory)
+
+    result$stalling    <- stalling    <- generations - which.min(result$ybesthistory)
+
+    if(control$constraint){
+      indMin <- purrr::map(out,"ybest") %>% as.numeric() %>% which.min()
+      result$consBest                <- purrr::map(out,"consBest") %>% as.numeric()
+      result$consBest                <- result$consBest[indMin]
+    }
+
 
     if (control$saveX)
       result$x[[generations]]         <- purrr::map(out,"x")
     if (control$saveSigma)
       result$sigma[[generations]]     <- purrr::map(out,"sigma")
 
-
+    result$evaluations[generations]    <- evaluations
     ####### Backup
 
     if(control$saveIter){
@@ -46,7 +58,7 @@ Multipopulation <- function(initList,...){
     ####### print output
     if(control$printIter){
       media <- c(media, mean(result$yForResults, na.rm = TRUE))
-      result <-  Output(best, control,evaluations, generations,media, NAs=result$NAs[generations], result, y=result$yForResults,
+      result <-  Output(best, control,consBest,evaluations,result$evaluations, generations,media, NAs=result$NAs[generations], result, y=result$yForResults,
                            x = purrr::map(out,"lastX"),sigma = purrr::map(out,"lastSigma"),out[[1]]$sigma0,stalling, pb)       # TODO correct this in a proper way
     }
 

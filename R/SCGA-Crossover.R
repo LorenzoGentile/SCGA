@@ -14,6 +14,7 @@ Crossover <- function(APPLY,ChangeCross,control,elitismSigma, feature, fitness,n
 
   ########## Crossover for candidates
 
+
   newPop[seq( from = control$elitism + 1, by = 1, length.out = 2 * row.sigma )] <- unlist(    # I start replacing the candidates starting from control$elitism +1
     APPLY( X = CrossPool, MARGIN = 1, control$crossFun, pop = x, feature = feature,
            maxChanges = ChangeCross, dontChange = control$dontChangeCross, keep = control$keep,
@@ -111,7 +112,6 @@ CrossOperation <- function(indexs,pop,maxChanges = Inf,feature,dontChange = NULL
     # update the indexes to avoid to change again
     avoid[[1]] <- unique(c(avoid[[1]], add[[2]][, "id"]))
     avoid[[2]] <- unique(c(avoid[[2]], add[[1]][, "id"]))
-
 
     if(!is.null(repairCross))
       candidates <- lapply(candidates, repairCross,budgetTot=budgetTot)

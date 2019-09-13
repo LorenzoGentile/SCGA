@@ -39,6 +39,9 @@ Initialise <-
     #initializatio of hyperparatmeter for Optimization
     con <- list(
       budgetTot               = 1,
+      cRef                    = 1e-4,
+      constraint              = FALSE,
+      constraintFun           = constraintHandlerFun ,
       convergence             = 0.001,                    # diffenrence between target and current best
       cpus                    = NA,
       createCandFun           = createCandidate,          # function used to create the candidate
@@ -162,6 +165,10 @@ Initialise <-
     stalling <-  ws <- evaluations              <- 0
     generations                                 <- 1
     best                                        <- Inf
+    consBest                                    <- NULL
+    wY                                          <- NULL
+    wC                                          <- NULL
+
 
 
     set.seed(control$seed, kind = "Mersenne-Twister", normal.kind = "Inversion")                               # set.seed
@@ -221,6 +228,24 @@ Initialise <-
         parSapply(cl,...)
       }
     }
+
+  ####### Ridefine objective function  ########
+
+      if(control$vectorized && control$vectorOnly )
+        evaluateFun <- function(x,...) Fun(x[1:length(x)][,"value"],...)
+
+      else if (control$vectorized && !control$vectorOnly )
+        evaluateFun <- function(x,...) Fun(x,...)
+
+      else if (!control$vectorized && !control$vectorOnly )
+        evaluateFun <- function(x,...) SAPPLY( X = x,Fun,...)
+
+      else if (!control$vectorized && control$vectorOnly )
+        evaluateFun <- function(x,...) SAPPLY( X = x[1:length(x)][,"value"], Fun,...)
+
+
+
+
     mutRate  <- control$mutRate
 
 
@@ -228,11 +253,12 @@ Initialise <-
       APPLY        = APPLY,
       best         = best,
       cl           = cl,
+      consBest     = consBest,
       control      = control,
+      evaluateFun  = evaluateFun,
       evaluations  = evaluations,
       feat         = feat,
       feature      = feature,
-      Fun          = Fun,
       generations  = generations,
       LAPPLY       = LAPPLY,
       media        = media,
@@ -242,7 +268,9 @@ Initialise <-
       SAPPLY       = SAPPLY,
       stalling     = stalling,
       stallinFlag  = stallinFlag,
-      ws           = ws
+      ws           = ws,
+      wY           = wY,
+      wC           = wC
     )
     )
   }

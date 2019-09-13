@@ -1,9 +1,20 @@
-Output <- function(best, control, evaluations,generations,media, NAs, result, y,x,sigma,sigma0,stalling, pb){
+Output <- function(best, control,consBest=NULL, evaluations,eval,generations,media, NAs, result, y,x,sigma,sigma0,stalling, pb){
   tictoc::toc()
+
   cat("\014")
-  print(
-    paste( "SCGA | iter = ", generations, " | Eval = ",evaluations, " | Best = ", best, " | Mean = ", mean(y, na.rm = TRUE),
-           " | Stalling = ", stalling, "| NAs = ", NAs))
+
+  if(control$constraint)
+    cat(
+      paste( "SCGA | iter = ", generations, " | Eval = ",evaluations, " | Best = ", prettyNum(best,digits=4)," | Const = ", prettyNum(consBest,digits=4),
+             " | Mean = ", prettyNum(mean(y, na.rm = TRUE),digits=4),
+             " | Stalling = ", stalling, "| NAs = ", NAs,"\n"))
+
+  else
+
+    cat(
+      paste( "SCGA | iter = ", generations, " | Eval = ",evaluations, " | Best = ", prettyNum(best,digits=4),
+             " | Mean = ", prettyNum(mean(y, na.rm = TRUE),digits=4),
+             " | Stalling = ", stalling, "| NAs = ", NAs,"\n"))
 
 
 
@@ -45,7 +56,7 @@ Output <- function(best, control, evaluations,generations,media, NAs, result, y,
     }
 
     if (control$plotEvolution){
-      Plot(result$ybesthistory, media, stalling)
+      Plot(result$ybesthistory, media, stalling,eval)
     }
   }
 

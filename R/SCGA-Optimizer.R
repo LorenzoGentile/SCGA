@@ -103,6 +103,8 @@ SCGA <-
 
       }
 
+      ####### Evaluation #################################################################################################
+
       x <- newPop # duplicate the population for convenience
 
       tictoc::tic("\n Evaluation time elasped ")
@@ -113,16 +115,38 @@ SCGA <-
 
         cat("\n","To evaluate",control$sizeToEval,"candidates","\n")
 
-        y[control$toEval]   <- control$evaluateFN(Fun,newPop[control$toEval],
-                                                  control$vectorOnly, control$vectorized,SAPPLY = SAPPLY,...)
-        yForResults <- y
+        outEvaluation  <- evaluateFun(newPop[control$toEval],...)
+
+        if(control$constraint){
+
+          constList                  <- control$constraintFun(outEvaluation,wY,wC,control$cRef,y[control$elitism],...)
+          y[control$toEval]          <- constList$y
+          constraint[control$toEval] <- constList$constraint
+          constraintForResults       <- constraint
+          yForResults                <- y
+          wC                         <- constList$wC
+          wY                         <- constList$wY
+
+        }
 
         ########## First Generation or no elitism
       } else{
 
         print(paste("To evaluate",control$size,"candidates"))
 
-        yForResults <- y <- control$evaluateFN(Fun, newPop, control$vectorOnly, control$vectorized,SAPPLY = SAPPLY,...)
+        outEvaluation <- evaluateFun(newPop,...)
+
+        ######### Constraint handling
+        if(control$constraint){
+
+          constList   <- control$constraintFun(outEvaluation,wY,wC,control$cRef,...)
+          yForResults <- y <- constList$y
+          constraint  <- constList$constraint
+          constraintForResults       <- constraint
+          wC          <- constList$wC
+          wY          <- constList$wY
+
+        }
 
         stallingFlag=F
       }
@@ -135,7 +159,10 @@ SCGA <-
         y[is.na(y)] <- ws + (mean(y[!is.na(y)])) * 0.1
       }
 
+
       tictoc::toc()
+
+
 
       ########## Fitness assignement
       fitness         <- control$fitnessFN(y)
@@ -151,7 +178,8 @@ SCGA <-
         y[1:control$elitism]    <- y[e]                                                 # (and relative sigmas) untouched as firsts in the list of candidates)
         newPop                  <- x[e]
         elitismSigma            <- sigma[e, ]
-
+        if(control$constraint)
+          constraint            <- constraint[e]
       }
 
       ####### Crossover #################################################################################################
@@ -171,7 +199,7 @@ SCGA <-
                                 size = control$sizeToEval,   replace = TRUE ) == 1)) + control$elitism
 
       if (!bazar::is.empty(MutPool)) {
-        MutationList <- Mutation(APPLY,ChangeMut,cl,control,feature,MutPool,newPop,nVar,sigma,sigma0)
+        MutationList <- Mutation(APPLY,ChangeMut,cl,control,feature,LAPPLY,MutPool,newPop,nVar,sigma,sigma0)
         newPop <- MutationList$newPop
         sigma  <- MutationList$sigma
         rm(MutationList)
@@ -189,20 +217,24 @@ SCGA <-
       result$NAs[generations]           <- NAs
 
       best                              <- min(yForResults, na.rm = TRUE)
+      if(control$constraint)
+        consBest                        <- constraintForResults[which.min(yForResults)]
       result$yForResults                <- yForResults
       result$ybesthistory[generations]  <- best
       result$stalling       <- stalling <- generations - which.min(result$ybesthistory)
+
       if (control$saveX)
         result$x[[generations]]         <- x
+
       if (control$saveSigma)
         result$sigma[[generations]]     <- sigma
-
 
       if(generations==1)
         evaluations        <- evaluations + control$size
       else
         evaluations        <- evaluations + control$sizeToEval
 
+      result$evaluations[generations]    <- evaluations
       ####### Backup
 
       if(control$saveIter){
@@ -216,7 +248,7 @@ SCGA <-
       ####### ptint output
       if(control$printIter){
         media <- c(media, mean(y, na.rm = TRUE))
-        result <- Output(best, control,evaluations, generations,media, NAs, result, y,x,sigma,sigma0,stalling, pb)
+        result <- Output(best, control,consBest,evaluations,result$evaluations, generations,media, NAs, result, y,x,sigma,sigma0,stalling, pb)
       }
 
       ####### increment generations
@@ -224,6 +256,7 @@ SCGA <-
 
     }
     ########## Finalize the output ############################################################################################
+
 
     result$evaluations      <- evaluations
     result$exitMessage      <- "Optimisation did not exceeded maximum function evaluations"
@@ -235,8 +268,8 @@ SCGA <-
     result$xbest            <- x[which(yForResults==best)]
     result$ybest            <- best
 
-
-
+    if(control$constraint)
+      result$consBest <- consBest
 
 
     return(result)
