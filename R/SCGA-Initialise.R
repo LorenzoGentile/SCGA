@@ -41,7 +41,6 @@ Initialise <-
       budgetTot               = 1,
       cRef                    = 1e-4,
       constraint              = FALSE,
-      constraintFun           = constraintHandlerFun ,
       convergence             = 0.001,                    # diffenrence between target and current best
       cpus                    = NA,
       createCandFun           = createCandidate,          # function used to create the candidate
@@ -50,7 +49,6 @@ Initialise <-
       dontChangeCross         = NULL,                     # feature that don' t have to be used in crossover and mutation
       dontChangeMut           = NULL,                      # feature that don' t have to be used in crossover and mutation
       elitism                 = NULL,
-      evaluateFN              = evaluatePopDF,            # Default evaluation function
       feature                 = NULL,
       fitnessFN               = assignFitnessRank,        # Default evaluation function
       Fun                     = NULL,
@@ -62,6 +60,7 @@ Initialise <-
       maxEvaluations          = NULL,
       maxGenerations          = NULL,
       multiPopulation         = FALSE,
+      maxRelaxation           = 0    ,
       # multiPopControl       = NULL,
       mutRate                 = 0.8,                      # likelihood to perform mutation
       mutationReport          = FALSE,
@@ -69,6 +68,7 @@ Initialise <-
       plotCross               = FALSE,
       plotCrossR              = FALSE,
       plotEvolution           = FALSE,                     # Print evolution of bests
+      plotFitness             = FALSE,
       plotPopulation          = FALSE,
       plotSigma               = FALSE,                     # Print maximum values of sigmas
       plotInterval            = 1,
@@ -78,6 +78,7 @@ Initialise <-
       printXMin               = FALSE,
       printPlot               = FALSE,
       probability             = NULL,
+      pureFeasibility         = 0   ,
       repairCross             = NULL,
       repairFun               = NULL,
       repairMutation          = NULL,
@@ -87,10 +88,10 @@ Initialise <-
       saveSigma               = FALSE,
       saveX                   = FALSE,
       seed                    = sample(1e6, 1),
-      selection               = selectPoolRouletteWheel,
+      selection               = selectpoolTournament,
       size                    = 30,                       # Size of population
       target                  = -Inf,                     # best value achievable
-      tournamentSize          = 6,
+      # tournamentSize          = 6,
       updateSigma             = FALSE,
       useCrossover            = TRUE,
       vectorOnly              = FALSE,                    # pass only the values to the obj
@@ -98,10 +99,14 @@ Initialise <-
       x                       = NULL
     )
 
-    con[names(control)] <- control
+    con[names(control)] = control
+    con$repairCross     = control$repairCross
+    con$repairFun       = control$repairFun
+    con$repairMutation  = control$repairMutation
     control <- con
     rm ("con")
-
+if(is.null(control$tournamentSize))
+  control$tournamentSize = control$size / 10
     if (is.null(control$elitism))
       control$elitism  <- floor(control$size * 0.075 + 1)
     control$toEval     <- (control$elitism + 1): control$size
@@ -156,21 +161,23 @@ Initialise <-
       }
     }
     ########## Initialise other #############################################################################################################
-
+    constList                                   <- NULL
+    constraint    <- constraintForResults       <- NULL
     feature                                     <- control$feature                                              # Initialise #
+    forceEvaluation                             <- FALSE
     Fun                                         = control$Fun                                                   # Initialise #
-    control$dontChange                          <- union(control$dontChangeMut, control$dontChangeCross)
     stallinFlag                                 <- FALSE                                                        # Initialise #
     media                                       <- NULL
     stalling <-  ws <- evaluations              <- 0
     generations                                 <- 1
     best                                        <- Inf
-    consBest                                    <- NULL
+    consBest      <- consBestRel <- bestRel     <- NULL
     wY                                          <- NULL
     wC                                          <- NULL
 
+if(control$constraint)
 
-
+  control$fitnessFN <- constraintHandlerFitness
     set.seed(control$seed, kind = "Mersenne-Twister", normal.kind = "Inversion")                               # set.seed
 
     if (is.null(feature))                                                                                      # Check feature
@@ -193,8 +200,8 @@ Initialise <-
 
 
 
-    if (!is.null(control$dontChange)){
-      active  <- as.numeric(setdiff(getValues(x = feature, name = "label", Unique = F),control$dontChange))      # Active feature
+    if (!is.null(control$dontChangeMut)){
+      active  <- as.numeric(setdiff(getValues(x = feature, name = "label", Unique = F),control$dontChangeMut))      # Active feature
       feat    <- feature[active]                                                                                 # Feature of only Active
     }else
       feat  <- feature
@@ -248,7 +255,6 @@ Initialise <-
 
     mutRate  <- control$mutRate
 
-
     return(list(
       APPLY        = APPLY,
       best         = best,
@@ -259,6 +265,7 @@ Initialise <-
       evaluations  = evaluations,
       feat         = feat,
       feature      = feature,
+      forceEvaluation=forceEvaluation,
       generations  = generations,
       LAPPLY       = LAPPLY,
       media        = media,

@@ -39,27 +39,25 @@ SCGA <-
       ########## else create the population and sigma
 
       initPopAndSigmaList <-suppressWarnings( InitPopAndSigma(control,feature,LAPPLY))
-      newPop <- initPopAndSigmaList$newPop
-      sigma <- initPopAndSigmaList$sigma
-      sigma0 <- initPopAndSigmaList$sigma0
+      list2env(initPopAndSigmaList,envir = environment())
       rm(initPopAndSigmaList)
+
 
     }
 
     ########## number of chromosome for operators
 
     ChangeList  <- EvalCand2Operator(newPop,control)
-    ChangeCross <- ChangeList$ChangeCross
-    ChangeMut   <- ChangeList$ChangeMut
+    list2env(ChangeList,envir = environment())
     rm(ChangeList)
 
 
-    ####### Start the main loop #################################################################################################
+    ########## Start the main loop #########################################################################################
     cat("\n Start optimization loop \n")
     pb <- progress::progress_bar$new(total = control$maxEvaluations,format = "  optimising [:bar] :percent eta: :eta", clear = TRUE, width= 60)
 
     while (evaluations <= (control$maxEvaluations-control$size+control$elitism) && abs(control$target - best) >= control$convergence ) {
-
+browser()
       tictoc::tic("Optimisation loop time elasped")
       ####### Stall generations #################################################################################################
       if(stalling == control$maxStallGenerations){
@@ -70,12 +68,14 @@ SCGA <-
         stalling    <- 0
 
         ########## reinitialise the population and sigma
-        initPopAndSigmaList <- InitPopAndSigma(control,feature,cl)
-        list2env(initPopAndSigmaList,envir = environment())
+        tempControl            <- control
+        tempControl$size       <- control$size - 1
+        initPopAndSigmaList     <- suppressWarnings( InitPopAndSigma(control=tempControl,feature,LAPPLY))
+        newPop[1:control$size] <- initPopAndSigmaList$newPop
+        sigma[1:control$size,] <- initPopAndSigmaList$sigma
         rm(initPopAndSigmaList)
-        #Output # newPop
-        # sigma
-        # sigma0
+        rm(tempControl)
+
 
 
         ########## number of chromosome to crossover
@@ -109,72 +109,106 @@ SCGA <-
 
       tictoc::tic("\n Evaluation time elasped ")
 
+      # count=get("count",envir = .GlobalEnv)
+      # if(evaluations>=12962)
+      #   browser()
+      # assign("count",count+1,envir = .GlobalEnv)
 
       ########## During the loop it saves elitism evaluations
-      if (as.logical(control$elitism) && generations != 1 && !stallingFlag) {
 
+
+      if (as.logical(control$elitism) && generations != 1 && !stallingFlag || forceEvaluation) {
+        forceEvaluation=FALSE
         cat("\n","To evaluate",control$sizeToEval,"candidates","\n")
+        outEvaluation <- evaluateFun(newPop[control$toEval]  ,...)
 
-        outEvaluation  <- evaluateFun(newPop[control$toEval],...)
+        ###### Assign from evaluation output
 
-        if(control$constraint){
+        if(is.list(outEvaluation)){
+          y[control$toEval]               <- outEvaluation[[1]]
 
-          constList                  <- control$constraintFun(outEvaluation,wY,wC,control$cRef,y[control$elitism],...)
-          y[control$toEval]          <- constList$y
-          constraint[control$toEval] <- constList$constraint
-          constraintForResults       <- constraint
-          yForResults                <- y
-          wC                         <- constList$wC
-          wY                         <- constList$wY
+          if(!is.null(outEvaluation$constraint))
+            constraint[control$toEval]    <- outEvaluation$constraint
 
-        }
+          if(!is.null(outEvaluation$x))
+            mewPop[control$toEval]        <- outEvaluation$x
 
-        ########## First Generation or no elitism
+        }else
+          y[control$toEval]               <- outEvaluation
+
+
       } else{
 
-        print(paste("To evaluate",control$size,"candidates"))
+        ########## First Generation or no elitism or after stalling
+        cat("\n","To evaluate",control$size,"candidates","\n")
 
         outEvaluation <- evaluateFun(newPop,...)
 
-        ######### Constraint handling
-        if(control$constraint){
+        ###### Assign from evaluation output
 
-          constList   <- control$constraintFun(outEvaluation,wY,wC,control$cRef,...)
-          yForResults <- y <- constList$y
-          constraint  <- constList$constraint
-          constraintForResults       <- constraint
-          wC          <- constList$wC
-          wY          <- constList$wY
+        if(is.list(outEvaluation)){
+          y                  <- outEvaluation[[1]]
 
-        }
+          if(!is.null(outEvaluation$constraint))
+            constraint       <- outEvaluation$constraint
+
+          if(!is.null(outEvaluation$x))
+            mewPop        <- outEvaluation$x
+
+        }else
+          y                <- outEvaluation
 
         stallingFlag=F
       }
 
-
-      ########## Na handling
-
-      if(anyNA(y)){
-        ws          <- max(y[!is.na(y)])
-        y[is.na(y)] <- ws + (mean(y[!is.na(y)])) * 0.1
-      }
-
+      yForResults        <- y
 
       tictoc::toc()
-
-
-
-      ########## Fitness assignement
-      fitness         <- control$fitnessFN(y)
 
       ########## Count the NAs
       NAs             <- sum(is.na(y))
 
-      ########## Elitism
 
+      ########## Fitness assignement
+      if(control$constraint){
+
+        constList                  <- constraintHandlerFitness(y,constraint,wY,wC,control$cRef,evaluations, control,...)
+        fitness                    <- constList$fitness
+        feasible                   <- constList$feasible
+        feasibleRelax              <- constList$feasibleRelax
+        constraint                 <- constList$constraint
+        constraintForResults       <- constraint
+        wC                         <- constList$wC
+        wY                         <- constList$wY
+
+      }else{
+
+        ########## Na handling
+
+        if(anyNA(y)){
+          ws          <- max(y[!is.na(y)])
+          y[is.na(y)] <- ws + (mean(y[!is.na(y)])) * 0.1
+        }
+
+        fitness         <- control$fitnessFN(y)
+
+      }
+
+
+
+      ########## Elitism
+      # if(!is.empty(constList$feasible))
+      #   browser()
       if (as.logical(control$elitism)) {
 
-        e = sort(fitness,index.return = T, decreasing = T)$ix[1:control$elitism]        # if elitism i save the control$elitism best candidates
+        e = sort(fitness,index.return = T, decreasing = T)$ix        # if elitism i save the control$elitism best candidates
+
+
+        if(control$constraint)
+          e = e[e %in% unique(c(feasible[sort(fitness[feasible],index.return=T,decreasing = T)$ix],e))[1:control$elitism]] ### preserve feasible and not relaxed feasible
+        # e = e[1:control$elitism]
+        else
+          e = e[1:control$elitism]
         y[1:control$elitism]    <- y[e]                                                 # (and relative sigmas) untouched as firsts in the list of candidates)
         newPop                  <- x[e]
         elitismSigma            <- sigma[e, ]
@@ -182,7 +216,7 @@ SCGA <-
           constraint            <- constraint[e]
       }
 
-      ####### Crossover #################################################################################################
+      ####### Crossover ####################################################################################################
       if(control$useCrossover){
 
         CrossoverList <- Crossover(APPLY,ChangeCross,control,elitismSigma, feature, fitness,newPop,sigma,x,Change,cl,...)
@@ -197,6 +231,34 @@ SCGA <-
 
       MutPool <- which((sample( c(0, 1),   prob = c((1 - mutRate), mutRate),
                                 size = control$sizeToEval,   replace = TRUE ) == 1)) + control$elitism
+
+
+
+      identicCandidates <- checkIdentical(newPop)
+      identicX = length(identicCandidates)
+      # if(identicX>40)
+      #   browser()
+
+      if(!is.empty(identicCandidates)){
+
+
+        if(any(identicCandidates<=control$elitism))
+          forceEvaluation <- TRUE
+
+        if(F){
+          tempControl <- control
+          tempControl$size <- length(identicCandidates)
+          initPopAndSigmaList <- suppressWarnings( InitPopAndSigma(control=tempControl,feature,LAPPLY))
+          newPop[identicCandidates] <- initPopAndSigmaList$newPop
+          sigma[identicCandidates,] <- initPopAndSigmaList$sigma
+        }else{
+          # browser()
+          MutPool <- c(MutPool,identicCandidates)
+          # sigma[identicCandidates,(1:(ncol(sigma)-8))]=sigma[identicCandidates,(1:(ncol(sigma)-8))]*10
+
+        }
+      }
+
 
       if (!bazar::is.empty(MutPool)) {
         MutationList <- Mutation(APPLY,ChangeMut,cl,control,feature,LAPPLY,MutPool,newPop,nVar,sigma,sigma0)
@@ -216,12 +278,39 @@ SCGA <-
 
       result$NAs[generations]           <- NAs
 
-      best                              <- min(yForResults, na.rm = TRUE)
-      if(control$constraint)
-        consBest                        <- constraintForResults[which.min(yForResults)]
+      best                              <- y[1]
+
+      print(x[which.max(fitness)])
+      ######### if Constraints
+      if(control$constraint){
+
+        consBest                        <- constraint[1]
+        result$consBesthistory[generations]  <- consBest
+        if(!is.empty(feasibleRelax)){
+
+          bestRel                           <- min(yForResults[feasibleRelax])
+          consBestRel                       <- constraintForResults[feasibleRelax[which.min(yForResults[feasibleRelax])]]
+
+          if(!is.na(bestRel) & is.na(consBestRel)  )
+            browser()
+        }
+        else{
+          bestRel                           <- NA
+          consBestRel                       <- NA
+        }
+      }
+
       result$yForResults                <- yForResults
       result$ybesthistory[generations]  <- best
-      result$stalling       <- stalling <- generations - which.min(result$ybesthistory)
+
+      if(control$constraint){
+
+        ybesthistoryFeas = result$ybesthistory
+        ybesthistoryFeas[result$consBesthistory > control$cRef ] <- Inf
+        result$stalling       <- stalling <- generations - which.min(ybesthistoryFeas)
+
+      }else
+        result$stalling       <- stalling <- generations - which.min(result$ybesthistory)
 
       if (control$saveX)
         result$x[[generations]]         <- x
@@ -248,7 +337,9 @@ SCGA <-
       ####### ptint output
       if(control$printIter){
         media <- c(media, mean(y, na.rm = TRUE))
-        result <- Output(best, control,consBest,evaluations,result$evaluations, generations,media, NAs, result, y,x,sigma,sigma0,stalling, pb)
+
+        result <- Output(best=best,bestRel=bestRel, control,consBest=consBest,consBestRel=consBestRel,constList=constList,evaluations=evaluations,
+                         eval= result$evaluations, fitness=fitness,generations=generations,identicX=identicX,media=media, NAs=NAs, result=result, y=yForResults,x=x,sigma=sigma,sigma0=sigma0,stalling=stalling, pb=pb,cRef=control$cRef)
       }
 
       ####### increment generations
@@ -256,8 +347,17 @@ SCGA <-
 
     }
     ########## Finalize the output ############################################################################################
+    if(control$constraint){
 
+      suppressWarnings(summaryDf <- data.frame(result$ybesthistory,result$consBesthistory,control$cRef,result$evaluations, result$NAs,control$seed))
+      colnames(summaryDf) = c("yBest", "constBest","cRef","evaluations","NAs","seed")
 
+    }else{
+
+      suppressWarnings( summaryDf <- data.frame(result$ybesthistory,result$evaluations, result$NAs,control$seed))
+      colnames(summaryDf) = c("yBest","evaluations","NAs","seed")
+
+    }
     result$evaluations      <- evaluations
     result$exitMessage      <- "Optimisation did not exceeded maximum function evaluations"
     result$control          <- control
@@ -265,6 +365,7 @@ SCGA <-
     result$lastX            <- x
     result$newPop           <- newPop
     result$sigma0           <- sigma0
+    result$summary          <- summaryDf
     result$xbest            <- x[which(yForResults==best)]
     result$ybest            <- best
 

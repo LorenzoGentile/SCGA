@@ -1,15 +1,17 @@
-Output <- function(best, control,consBest=NULL, evaluations,eval,generations,media, NAs, result, y,x,sigma,sigma0,stalling, pb){
+Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,constList,evaluations,eval,fitness,generations,identicX,media, NAs, result, y,x,sigma,sigma0,stalling, pb,cRef=NULL){
   tictoc::toc()
 
   cat("\014")
 
-  if(control$constraint)
+  if(control$constraint){
+    # prettyNum(consBestRel/cRef,digits=4)
     cat(
-      paste( "SCGA | iter = ", generations, " | Eval = ",evaluations, " | Best = ", prettyNum(best,digits=4)," | Const = ", prettyNum(consBest,digits=4),
+      paste( "SCGA | iter = ", generations, " | Eval = ",evaluations," | Identical = " ,identicX," | Best = ", prettyNum(best,digits=4)," | ConstRatio = ", prettyNum(consBest/cRef,digits=4),
+             " | BestRel = ", prettyNum(bestRel,digits=4)," | ConstRatioRel = ", consBestRel/cRef," | relaxedCref = ",prettyNum(constList$relaxedCRef/cRef,digits=4),
              " | Mean = ", prettyNum(mean(y, na.rm = TRUE),digits=4),
              " | Stalling = ", stalling, "| NAs = ", NAs,"\n"))
 
-  else
+  }else
 
     cat(
       paste( "SCGA | iter = ", generations, " | Eval = ",evaluations, " | Best = ", prettyNum(best,digits=4),
@@ -25,7 +27,8 @@ Output <- function(best, control,consBest=NULL, evaluations,eval,generations,med
 
   ####### plots
 
-  if( generations %% control$plotInterval == 0 && any(c(control$plotSigma,control$plotEvolution,control$plotPopulation))){
+  if( generations %% control$plotInterval == 0 && any(c(control$plotSigma,control$plotEvolution,control$plotPopulation,control$plotFitness))){
+    G1 =G2 = NULL
 
     if(!file.exists(file.path("runResults")) && control$printPlot)
       dir.create(file.path("runResults"))
@@ -56,10 +59,21 @@ Output <- function(best, control,consBest=NULL, evaluations,eval,generations,med
     }
 
     if (control$plotEvolution){
-      Plot(result$ybesthistory, media, stalling,eval)
+      G1 <- Plot(result$ybesthistory, media, stalling,eval)
     }
-  }
+    if(control$plotFitness){
+      ind                                        <- length(result$plots$sigma$generations)+1
+      G2 <-  result$plots$fitness$plot[[ind]] <- plotFitness(y,constList,fitness)
+    }
 
+
+    if(!is.null(G1) & !is.null(G2) )
+      print(ggpubr::ggarrange(G1,G2))
+    else if(!is.null(G1) & is.null(G2) )
+      print(G1)
+    else if(is.null(G1) & !is.null(G2) )
+      print(G2)
+  }
   if (control$printSigma) {
     cat("\n Sigma normalised")
     print(t(t(sigma) / sigma0))

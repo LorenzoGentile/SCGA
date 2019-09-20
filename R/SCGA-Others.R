@@ -68,7 +68,6 @@ InitPopAndSigma <- function(control,feature,LAPPLY){
 
 
   if(is.null(control$sigma)){
-
     ########## Sigma
     if(is.null(control$sigma0))
       sigma0        <- initSigma(feature, control$dontChangeMut)
@@ -92,24 +91,24 @@ InitPopAndSigma <- function(control,feature,LAPPLY){
   ))
 }
 
-assignFitnessProportional <- function(y, x) {
+assignFitnessProportional <- function(y) {
 
   ## scale the observation between 0 and 1. assigning 1 to the lowest value and 0 to the highest -> Minimization
   minumProb=0.05
-  y = -y
-  y = y - min(y, na.rm = TRUE)+minumProb
+  fitness = -y
+  fitness = fitness - min(fitness, na.rm = TRUE)+minumProb
 
-  y = y / (max(y, na.rm = TRUE)-min(y, na.rm = TRUE) + minumProb)
-  y[which(is.na(y))]=minumProb
+  fitness = fitness / (max(fitness, na.rm = TRUE)-min(fitness, na.rm = TRUE) + minumProb)
+  fitness[which(is.na(fitness))]=minumProb
 
-  return(y)
+  return(fitness)
 }
 
 
-assignFitnessRank <- function(y, x) {
+assignFitnessRank <- function(y) {
   # rank the solutions
-  y <- match(y,sort(y,na.last = FALSE,decreasing = T))
-  return(y)
+  fitness <- match(y,sort(y,na.last = FALSE,decreasing = T))
+  return(fitness)
 }
 
 
@@ -292,31 +291,115 @@ getValues <- function(x, name="label", Unique = TRUE,forC=NA) {
 
   return(unlist(out))
 }
-constraintHandlerFun <- function(out,wY,wC,cRef,yElitism=NULL,...){
+constraintHandlerFitness <- function(y,con,wY,wC,cRef,evaluations, control,...){
 
-  y <- out[[1]]
-  con <- out[[2]]
+  ###### Define worst in current population  ########
+  wY               <- max(y,na.rm = T)
+  # wC               <- max(con,na.rm = T)
+  wC               <- mean(con,na.rm = T)
+
+  ###### Handling NA ########
+  con[is.na(y)]    <- wC + (mean(c(con[!is.na(y)])))
+  y[is.na(y)]      <- wY + (mean(y[!is.na(y)]))
+
+  ###### Penalise not feasible solutions ########
+
+  feasible        <- which( con <= cRef )
+  notFeasible     <- which( con > cRef )
+
+  if(!is.empty(feasible))
+    wY               <- max(y[feasible])
+
+  ###### Evaluate relaxCRef ########
+
+  if(control$pureFeasibility != 1 && control$maxRelaxation!=0){
+    relaxedCRef      <- calcCurrCref(evaluations, control$maxEvaluations,control$pureFeasibility ,control$maxRelaxation,cRef)
+
+    if(is.na( relaxedCRef) || is.infinite( relaxedCRef) )
+      relaxedCRef    <- cRef
+
+  } else
+    relaxedCRef      <- cRef
+
+  relaxedCRef        <- max(relaxedCRef ,cRef)
 
 
+  feasibleRelax      <- which( con <= relaxedCRef & con > cRef)
+  unfeasibleRelax    <- which(con > relaxedCRef)
 
+  ###### Assign fitness ########
 
-  # if(is.null(wY))
-    wY = max(y,na.rm = T)
-  # else
-  #   wY = max(c(y,wY),na.rm = T)
+  scaledCons         <- pmax(con[unfeasibleRelax] / wC * wY,wY)
+  y[unfeasibleRelax] <- scaledCons + y[unfeasibleRelax] # probblema qui : i non fieasible lono troppo piccoli
 
-  # if(is.null(wC))
-    wC = max(con,na.rm = T)
-  # else
-  #   wC = max(c(con,wC),na.rm = T)
+  # fitness            <- assignFitnessProportional(y)
+  fitness            <- assignFitnessRank(y)
 
-  y[is.na(y)] <- wY + (mean(c(y[!is.na(y)],yElitism))) * 0.1
+  # fitness[fitness<quantile(fitness,.05)] <- quantile(fitness,.05)
+  ###### create a resuming vector ########
+  resFeas                                <- rep("unfeasible",length(y))
+  resFeas[feasibleRelax]                 <- "feasibleRelax"
+  resFeas[feasible]                      <- "feasible"
+  resFeas                                <- as.factor(resFeas)
 
-  unfeaseable <- which(cRef <= con)
-  scaledCons  <-  con[unfeaseable]/wC * wY
-  # y[unfeaseable] <- scaledCons + wY
-  y[unfeaseable] <- scaledCons + y[unfeaseable]
-
-  return(list(y=y,wC=wC,wY=wY,constraint=con))
+  return(list(fitness=fitness,wC=wC,wY=wY,constraint=con,feasible=feasible,feasibleRelax=feasibleRelax,resFeas=resFeas,relaxedCRef=relaxedCRef))
 
 }
+calcCurrCref <- function(evaluations, maxEvalutions,pureFeasibility ,maxRelaxation,cRef){
+
+  evaluationsPureFeasible <- ( 1 - pureFeasibility) * maxEvalutions
+  MaxCRefRelaxed          <- ( 1 + maxRelaxation) * cRef
+
+  return(
+    MaxCRefRelaxed - (((MaxCRefRelaxed - cRef) / (evaluationsPureFeasible)) * evaluations)
+  )
+
+}# order <- function(x,todo=x[,"id"]){
+#   done = x[!x[,"prec"]%in%todo,"id"]
+#   x[setdiff(todo,done),]sapply(done ,order,x=x)
+#
+#s
+#
+# }
+#
+checkIdentical <- function(newPop){
+  toMutate=NULL
+
+  for (i in (length(newPop)-1):1) {
+    for(j in (i+1):(length(newPop))){
+
+      if(identical(newPop[[i]][,-c(3,4)],newPop[[j]][,-c(3,4)])){
+        toMutate=c(toMutate,j)
+        break()
+      }
+
+    }
+
+  }
+  return(toMutate)
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

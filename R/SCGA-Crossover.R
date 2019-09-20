@@ -1,4 +1,5 @@
 Crossover <- function(APPLY,ChangeCross,control,elitismSigma, feature, fitness,newPop,sigma,x,Change,cl,...){
+
   CrossPool <- control$selection(fitness, (ceiling((   control$size - control$elitism ) / 2)), tsize = control$tournamentSize)  # matrix ncol=2 nrow size/2 indicating the couples to make crossover
 
 
@@ -258,5 +259,7 @@ CrossDFRet<-function(x,toSelect){
   return(archive)
 
 }
+
+
 
 

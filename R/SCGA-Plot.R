@@ -30,13 +30,13 @@ Plot <- function (y,yT,stalling,eval){
          geom_point(mapping= aes(y= y,colour="black"),show.legend=FALSE)+
          theme_minimal()+
          annotate(geom="text", x=mean(eval), y=max(c(y,yT)), label=paste("Iter from improvement", stalling,
-                  "|| Min " , prettyNum(min(y),digits=4),"|| Mean " , prettyNum(min(yT),digits=4)),
+                                                                         "|| Min " , prettyNum(min(y),digits=4),"|| Mean " , prettyNum(min(yT),digits=4)),
                   color="red")) + xlab("Objective Function Evaluations")
 
   if(all(c(y,yT)>0))
     g = g + scale_y_log10()
 
-  print(g)
+ return(g)
 
 }
 Plotsigmas <- function(toCompare, generations, path,printIt,sigma0,subpath="/opt-gen-sigma-") {
@@ -91,5 +91,12 @@ PlotPopulation <- function(newPop, generations,path,printIt,subpath="/opt-gen-")
     g <- mapply(plotPopulation,toCompare=toCompare, subpath=subpath,MoreArgs = list(generations=generations,path=path,printIt=printIt),SIMPLIFY = FALSE)
   }
   return(g)
+}
+plotFitness <- function(y,constList,fitness){
 
+  df = data_frame(y=y,constraint=constList$constraint,fitness=fitness,feas=constList$resFeas )
+  # scalefactotr=max(constList$constraintconstraint)/max(y)
+  # print(ggplot(df,mapping=aes(x=fitness))+geom_point(aes(y=constraint,shape=as.factor(2),size=1.8,colour=feas))+geom_point(aes(y=y*scalefactotr,colour=feas,shape=as.factor(1),size=1.8)) + scale_y_continuous(sec.axis = sec_axis(~ ./scalefactotr)))
+  g <- (ggplot(df,mapping=aes(x=fitness))+geom_point(aes(y=y,colour=feas,shape=as.factor(1),size=1.8))+scale_y_log10())+theme_minimal() + theme(legend.position="top") +guides(shape = FALSE, size = FALSE)
+  return(g)
 }
