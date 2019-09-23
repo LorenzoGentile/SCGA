@@ -19,7 +19,7 @@ Crossover <- function(APPLY,ChangeCross,control,elitismSigma, feature, fitness,n
     APPLY( X = CrossPool, MARGIN = 1, CrossOperation, pop = x, feature = feature,
            keep = control$keep,
            repairCross = control$repairFun, budgetTot = control$budgetTot,
-           probability=control$probability )
+           control=control,probability=control$probability )
     ,recursive = F )
 
   ## Remove the possible exceeding candidates
@@ -33,7 +33,7 @@ Crossover <- function(APPLY,ChangeCross,control,elitismSigma, feature, fitness,n
   ))
 }
 
-CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,budgetTot,...) {
+CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,budgetTot,control,...) {
 
   ########## Initialise ######################################################################################
   toadd      <- add <- index <-  list()
@@ -45,7 +45,7 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
 
   ########## select the possible feature to swap
   possible   <- intersect(candidates[[1]][, "feature"], candidates[[2]][, "feature"])
-  possible   <- setdiff(possible, dontChange)
+  possible   <- setdiff(possible, control$dontChangeCross)
   repetition <- probability <- rep(1, times =  purrr::map(feature,"label") %>% as.numeric() %>% max()) #deafault
 
 

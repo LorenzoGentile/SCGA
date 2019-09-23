@@ -258,11 +258,14 @@ SCGA <-
       best                              <- y[1]
 
       print(x[which.max(fitness)])
+
+
+
       ######### if Constraints
       if(control$constraint){
-
-        consBest                        <- constraint[1]
-        result$consBesthistory[generations]  <- consBest
+        best                                <- bestFeasible$y
+        consBest                            <- bestFeasible$constraint
+        result$consBesthistory[generations] <- consBest
         if(!is.empty(feasibleRelax)){
 
           bestRel                           <- min(yForResults[feasibleRelax])
@@ -276,8 +279,12 @@ SCGA <-
         }
       }
 
-      result$yForResults                <- yForResults
-      result$ybesthistory[generations]  <- best
+      result$yForResults                    <- yForResults
+      result$ybesthistory[generations]      <- best
+
+
+
+      ######### Stalling
 
       if(control$constraint){
 
@@ -287,6 +294,8 @@ SCGA <-
 
       }else
         result$stalling       <- stalling <- generations - which.min(result$ybesthistory)
+
+
 
       if (control$saveX)
         result$x[[generations]]         <- x
@@ -334,6 +343,7 @@ SCGA <-
       colnames(summaryDf) = c("yBest","evaluations","NAs","seed")
 
     }
+
     result$evaluations      <- evaluations
     result$exitMessage      <- "Optimisation did not exceeded maximum function evaluations"
     result$control          <- control
@@ -342,8 +352,15 @@ SCGA <-
     result$newPop           <- newPop
     result$sigma0           <- sigma0
     result$summary          <- summaryDf
-    result$xbest            <- x[which(yForResults==best)]
-    result$ybest            <- best
+
+
+    if(control$constraint){
+      result$xbest            <- bestFeasible$x
+      result$ybest            <- bestFeasible$y
+    }  else{
+      result$xbest            <- x[which(yForResults==best)]
+      result$ybest            <- best
+    }
 
 
 
