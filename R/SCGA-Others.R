@@ -19,14 +19,16 @@ RestartFromBackup <- function(resumeFrom){             #Function still To be che
 }
 
 EvalCand2Operator<- function(newPop,control){
+  browser()
   if (is.null(control$dontChangeCross)) {
 
     avglength     <- (length(unlist(newPop)) / ncol(newPop[[1]])) / control$size
 
   } else {
 
-    avglength     <- round(mean(apply(as.matrix(1:length(newPop)), MARGIN = 1, FUN = function(i, x) {
-      sum(!(x[[i]][, "feature"] %in% control$dontChangeCross))  }, x = newPop )))
+    avglength     <- round(mean(sapply(newPop,function(x)
+      sum(x[,"feature"] %in% setdiff(x[,"feature"],control$dontChangeCross))
+    )))
   }
 
 
@@ -39,14 +41,18 @@ EvalCand2Operator<- function(newPop,control){
 
   } else {
 
-    avglength     <- round(mean(apply(as.matrix(1:length(newPop)), MARGIN = 1, FUN = function(i, x) {
-      sum(!(x[[i]][, "feature"] %in% control$dontChangeMut))  }, x = newPop )))
+    avglength     <- round(mean(sapply(newPop,function(x)
+      sum(x[,"feature"] %in% setdiff(x[,"feature"],control$dontChangeMut))
+    )))
   }
 
 
   ChangeMut          <- round((avglength / 2) * control$maxChange)
   return(list(ChangeCross=ChangeCross,ChangeMut=ChangeMut))
 }
+
+
+
 InitPopAndSigma <- function(control,feature,LAPPLY){
 
   if(is.null(control$newPop)){
@@ -323,8 +329,11 @@ constraintHandlerFitness <- function(y,con,wY,wC,cRef,evaluations, control,...){
 
   relaxedCRef        <- max(relaxedCRef ,cRef)
 
+  if(!is.empty(feasible))
+    feasibleRelax    <- which( con <= relaxedCRef & con > cRef & y < min(y[feasible]))
+  else
+    feasibleRelax    <- which( con <= relaxedCRef & con > cRef )
 
-  feasibleRelax      <- which( con <= relaxedCRef & con > cRef)
   unfeasibleRelax    <- which(con > relaxedCRef)
 
   ###### Assign fitness ########

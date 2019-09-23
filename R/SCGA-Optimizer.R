@@ -45,19 +45,14 @@ SCGA <-
 
     }
 
-    ########## number of chromosome for operators
-
-    ChangeList  <- EvalCand2Operator(newPop,control)
-    list2env(ChangeList,envir = environment())
-    rm(ChangeList)
-
 
     ########## Start the main loop #########################################################################################
     cat("\n Start optimization loop \n")
     pb <- progress::progress_bar$new(total = control$maxEvaluations,format = "  optimising [:bar] :percent eta: :eta", clear = TRUE, width= 60)
 
     while (evaluations <= (control$maxEvaluations-control$size+control$elitism) && abs(control$target - best) >= control$convergence ) {
-browser()
+      # if(generations ==18)
+      #   browser()
       tictoc::tic("Optimisation loop time elasped")
       ####### Stall generations #################################################################################################
       if(stalling == control$maxStallGenerations){
@@ -70,20 +65,13 @@ browser()
         ########## reinitialise the population and sigma
         tempControl            <- control
         tempControl$size       <- control$size - 1
-        initPopAndSigmaList     <- suppressWarnings( InitPopAndSigma(control=tempControl,feature,LAPPLY))
+        initPopAndSigmaList    <- suppressWarnings( InitPopAndSigma(control=tempControl,feature,LAPPLY))
         newPop[1:control$size] <- initPopAndSigmaList$newPop
         sigma[1:control$size,] <- initPopAndSigmaList$sigma
         rm(initPopAndSigmaList)
         rm(tempControl)
 
 
-
-        ########## number of chromosome to crossover
-
-        ChangeList  <- EvalCand2Operator(newPop,control)
-        ChangeCross <- ChangeList$ChangeCross
-        ChangeMut   <- ChangeList$ChangeMut
-        rm(ChangeList)
       }
 
 
@@ -118,6 +106,7 @@ browser()
 
 
       if (as.logical(control$elitism) && generations != 1 && !stallingFlag || forceEvaluation) {
+
         forceEvaluation=FALSE
         cat("\n","To evaluate",control$sizeToEval,"candidates","\n")
         outEvaluation <- evaluateFun(newPop[control$toEval]  ,...)
@@ -172,6 +161,32 @@ browser()
       ########## Fitness assignement
       if(control$constraint){
 
+        ## precompute the feiasible and unfe
+        feasible   <- which(constraint <= control$cRef)
+        unfeasible <- which(constraint > control$cRef)
+        # if there is not unfeasible treat use the feasible
+        if(is.empty(unfeasible))
+          unfeasible <- feasible
+        #if i have a feasible and it is better then the stored one -> update
+        if(!is.empty(feasible)){
+
+          if(min(y[feasible]) < bestFeasible$y){
+
+            bestFeasible$y          <- min(y[feasible])
+            bestFeasible$x          <- newPop[[feasible[which.min(y[feasible])]]]
+            bestFeasible$constraint <- constraint[feasible[which.min(y[feasible])]]
+
+          } else if( !is.null(bestFeasible$x )){ # else replace the worst unfeasible with the best feasible
+            ## TODO add check if is already there
+            toRemove             <- unfeasible[which.max(constraint[unfeasible])]
+            newPop[[toRemove]]   <- bestFeasible$x
+            y[toRemove]          <- bestFeasible$y
+            constraint[toRemove] <- bestFeasible$constraint
+          }
+        }
+        # if(!is.empty(feasible))
+        #   browser()
+        print( bestFeasible$y )
         constList                  <- constraintHandlerFitness(y,constraint,wY,wC,control$cRef,evaluations, control,...)
         fitness                    <- constList$fitness
         feasible                   <- constList$feasible
@@ -205,8 +220,8 @@ browser()
 
 
         if(control$constraint)
-          e = e[e %in% unique(c(feasible[sort(fitness[feasible],index.return=T,decreasing = T)$ix],e))[1:control$elitism]] ### preserve feasible and not relaxed feasible
-        # e = e[1:control$elitism]
+          # e = e[e %in% unique(c(feasible[sort(fitness[feasible],index.return=T,decreasing = T)$ix],e))[1:control$elitism]] ### preserve feasible and not relaxed feasible
+          e = e[1:control$elitism]
         else
           e = e[1:control$elitism]
         y[1:control$elitism]    <- y[e]                                                 # (and relative sigmas) untouched as firsts in the list of candidates)
@@ -219,9 +234,9 @@ browser()
       ####### Crossover ####################################################################################################
       if(control$useCrossover){
 
-        CrossoverList <- Crossover(APPLY,ChangeCross,control,elitismSigma, feature, fitness,newPop,sigma,x,Change,cl,...)
-        newPop <- CrossoverList$newPop
-        sigma  <- CrossoverList$sigma
+        CrossoverList <- Crossover(APPLY,ChangeCross,control,elitismSigma, feature, fitness,newPop,sigma,x,cl,...)
+        newPop        <- CrossoverList$newPop
+        sigma         <- CrossoverList$sigma
         rm(CrossoverList)
 
       } else
@@ -229,50 +244,12 @@ browser()
 
       ####### Mutation #################################################################################################
 
-      MutPool <- which((sample( c(0, 1),   prob = c((1 - mutRate), mutRate),
-                                size = control$sizeToEval,   replace = TRUE ) == 1)) + control$elitism
 
-
-
-      identicCandidates <- checkIdentical(newPop)
-      identicX = length(identicCandidates)
-      # if(identicX>40)
-      #   browser()
-
-      if(!is.empty(identicCandidates)){
-
-
-        if(any(identicCandidates<=control$elitism))
-          forceEvaluation <- TRUE
-
-        if(F){
-          tempControl <- control
-          tempControl$size <- length(identicCandidates)
-          initPopAndSigmaList <- suppressWarnings( InitPopAndSigma(control=tempControl,feature,LAPPLY))
-          newPop[identicCandidates] <- initPopAndSigmaList$newPop
-          sigma[identicCandidates,] <- initPopAndSigmaList$sigma
-        }else{
-          # browser()
-          MutPool <- c(MutPool,identicCandidates)
-          # sigma[identicCandidates,(1:(ncol(sigma)-8))]=sigma[identicCandidates,(1:(ncol(sigma)-8))]*10
-
-        }
-      }
-
-
-      if (!bazar::is.empty(MutPool)) {
-        MutationList <- Mutation(APPLY,ChangeMut,cl,control,feature,LAPPLY,MutPool,newPop,nVar,sigma,sigma0)
-        newPop <- MutationList$newPop
-        sigma  <- MutationList$sigma
-        rm(MutationList)
-      }
-
-      ########## number of chromosome for operators
-
-      ChangeList  <- EvalCand2Operator(newPop,control)
-      ChangeCross <- ChangeList$ChangeCross
-      ChangeMut   <- ChangeList$ChangeMut
-      rm(ChangeList)
+      MutationList <- Mutation(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nVar,sigma,sigma0)
+      newPop       <- MutationList$newPop
+      sigma        <- MutationList$sigma
+      identicX     <- MutationList$identicX
+      rm(MutationList)
 
       ####### Update output #################################################################################################
 
@@ -291,8 +268,7 @@ browser()
           bestRel                           <- min(yForResults[feasibleRelax])
           consBestRel                       <- constraintForResults[feasibleRelax[which.min(yForResults[feasibleRelax])]]
 
-          if(!is.na(bestRel) & is.na(consBestRel)  )
-            browser()
+
         }
         else{
           bestRel                           <- NA
@@ -368,6 +344,8 @@ browser()
     result$summary          <- summaryDf
     result$xbest            <- x[which(yForResults==best)]
     result$ybest            <- best
+
+
 
     if(control$constraint)
       result$consBest <- consBest

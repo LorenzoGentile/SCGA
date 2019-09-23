@@ -1,6 +1,6 @@
 MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
-                           dontChange=dontChange, replicates=F,repairMut=NULL,
-                           updateSigma,...) {
+                       dontChange=dontChange, replicates=F,repairMut=NULL,
+                       updateSigma,control,...) {
 
   index       <- X
   x           <- pop
@@ -8,18 +8,18 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
   sigmas      <- sigmas[index,]
   avoid<- NULL
 
+  toChange <- sum(x[,"feature"] %in% setdiff(x[,"feature"],dontChange))
+
   possible    <- setdiff(unique(x[,"feature"]),dontChange)
-  repetition  <- probability <- rep(1, times = max(as.integer(getValues(feature, name = "label")))) #deafault
-  probability <- probability[possible]
-  repetition  <- repetition[possible]
+  repetition  <- probability                                        <- rep(1, length(possible)) #deafault
 
-  if (replicates){
-    r <- rle(sort(x[,"feature"]))
-    repetition<- r[[1]][match(possible,r[[2]])]
-  }
 
-  maxMuting   <- round(maxMuting * rnorm(1,1,.2))
-  exchanges   <- min(sum(repetition),maxMuting)
+  r <- rle(sort(x[,"feature"]))
+  repetition <- r[[1]][match(possible,r[[2]])]
+
+
+  maxMuting   <- round(toChange * control$percMut * rnorm(1,1,.2))
+  exchanges   <- min(toChange,maxMuting)
 
   if (length(possible) > 1)
     featuretochange <- sample(possible,exchanges,prob = probability*repetition,replace = T)
@@ -52,6 +52,8 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
 
   if(!is.null(repairMut))
     x <- repairMut(x,feature)
+  # if(nrow(x)==nrow(back))
+  #   print(cbind(back[,1],back[,1]==x[,1],x))
 
   return(list(x,sigmas))
 }

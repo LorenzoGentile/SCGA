@@ -24,11 +24,13 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
   # TODO : ERROR THAT HAS TO BE FIXED
   pb$update(min(.99,evaluations/control$maxEvaluations))
   pb$tick()
+  control$job=list()
+  control$job$algo.name="ffd"
 
   ####### plots
 
   if( generations %% control$plotInterval == 0 && any(c(control$plotSigma,control$plotEvolution,control$plotPopulation,control$plotFitness))){
-    G1 =G2 = NULL
+    G1 =G2 =G3= NULL
 
     if(!file.exists(file.path("runResults")) && control$printPlot)
       dir.create(file.path("runResults"))
@@ -45,7 +47,7 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
       if(control$updateSigma){
         ind                                        <- length(result$plots$sigma$generations)+1
         result$plots$sigma$generations[[ind]]      <- generations
-        result$plots$sigma$plot[[ind]]             <- Plotsigmas(sigma,generations=generations, path=path,printIt=control$printPlot,sigma0=sigma0)
+        result$plots$sigma$plot[[ind]]    <- G3    <- Plotsigmas(sigma,generations=generations, path=path,printIt=control$printPlot,sigma0=sigma0)
       }
 
       else
@@ -67,12 +69,23 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
     }
 
 
-    if(!is.null(G1) & !is.null(G2) )
-      print(ggpubr::ggarrange(G1,G2))
-    else if(!is.null(G1) & is.null(G2) )
+    if(!is.null(G1) & !is.null(G2) & !is.null(G3))
+      print(ggpubr::ggarrange(G1,G2, G3))
+
+    else if(!is.null(G1) & is.null(G2) & !is.null(G3) )
+      print(ggpubr::ggarrange(G1, G3))
+    else if(is.null(G1) & !is.null(G2) & !is.null(G3) )
+      print(ggpubr::ggarrange(G2, G3))
+    else if(!is.null(G1) & !is.null(G2) & is.null(G3) )
+      print(ggpubr::ggarrange(G1, G2))
+
+
+    else if(!is.null(G1) & is.null(G2) & is.null(G3))
       print(G1)
-    else if(is.null(G1) & !is.null(G2) )
+    else if(is.null(G1) & !is.null(G2) & is.null(G3) )
       print(G2)
+    else if(is.null(G1) & is.null(G2) & !is.null(G3) )
+      print(G3)
   }
   if (control$printSigma) {
     cat("\n Sigma normalised")

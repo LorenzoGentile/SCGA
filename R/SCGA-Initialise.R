@@ -56,7 +56,6 @@ Initialise <-
       job                     = NULL,
       keep                    = NULL,                     # vector of fields that don't have to be touched
       #localOptGenerations    = maxGenerations
-      maxChange               = 1,                        # ratio between the number of chromosome to corssover and the half of the avarege length of the candidates
       maxEvaluations          = NULL,
       maxGenerations          = NULL,
       multiPopulation         = FALSE,
@@ -65,6 +64,8 @@ Initialise <-
       mutRate                 = 0.8,                      # likelihood to perform mutation
       mutationReport          = FALSE,
       parallel                = FALSE,                     # parallelize the evaluation of the objective function
+      percCross               = 0.5  ,                     # ratio between the number of chromosome to corssover and the avarege length of the candidates
+      percMut                 = 0.3  ,                     # ratio between the number of chromosome to mutate length of the candidate
       plotCross               = FALSE,
       plotCrossR              = FALSE,
       plotEvolution           = FALSE,                     # Print evolution of bests
@@ -175,9 +176,10 @@ if(is.null(control$tournamentSize))
     wY                                          <- NULL
     wC                                          <- NULL
 
-if(control$constraint)
-
+if(control$constraint){
   control$fitnessFN <- constraintHandlerFitness
+  bestFeasible      <- list(y = Inf, x = NULL, constraint = NULL)
+}
     set.seed(control$seed, kind = "Mersenne-Twister", normal.kind = "Inversion")                               # set.seed
 
     if (is.null(feature))                                                                                      # Check feature
@@ -258,6 +260,7 @@ if(control$constraint)
     return(list(
       APPLY        = APPLY,
       best         = best,
+      bestFeasible = bestFeasible,
       cl           = cl,
       consBest     = consBest,
       control      = control,

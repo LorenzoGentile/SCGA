@@ -1,5 +1,4 @@
-Crossover <- function(APPLY,ChangeCross,control,elitismSigma, feature, fitness,newPop,sigma,x,Change,cl,...){
-
+Crossover <- function(APPLY,ChangeCross,control,elitismSigma, feature, fitness,newPop,sigma,x,cl,...){
   CrossPool <- control$selection(fitness, (ceiling((   control$size - control$elitism ) / 2)), tsize = control$tournamentSize)  # matrix ncol=2 nrow size/2 indicating the couples to make crossover
 
 
@@ -14,11 +13,11 @@ Crossover <- function(APPLY,ChangeCross,control,elitismSigma, feature, fitness,n
     sigma <- rbind(elitismSigma, sigma)
 
   ########## Crossover for candidates
-
-
+  # control$crossFun
+  # CrossOperation
   newPop[seq( from = control$elitism + 1, by = 1, length.out = 2 * row.sigma )] <- unlist(    # I start replacing the candidates starting from control$elitism +1
-    APPLY( X = CrossPool, MARGIN = 1, control$crossFun, pop = x, feature = feature,
-           maxChanges = ChangeCross, dontChange = control$dontChangeCross, keep = control$keep,
+    APPLY( X = CrossPool, MARGIN = 1, CrossOperation, pop = x, feature = feature,
+           keep = control$keep,
            repairCross = control$repairFun, budgetTot = control$budgetTot,
            probability=control$probability )
     ,recursive = F )
@@ -34,14 +33,15 @@ Crossover <- function(APPLY,ChangeCross,control,elitismSigma, feature, fitness,n
   ))
 }
 
-CrossOperation <- function(indexs,pop,maxChanges = Inf,feature,dontChange = NULL,keep = NULL,repairCross = NULL,budgetTot,...) {
+CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,budgetTot,...) {
 
   ########## Initialise ######################################################################################
   toadd      <- add <- index <-  list()
   replicates <- TRUE
   candidates <- pop[indexs]
   avoid = list(NULL, NULL)
-
+  avglength  <- round(mean(sapply(candidates,function(x) sum(x[,"feature"] %in% setdiff(x[,"feature"],control$dontChangeCross)))))
+  maxChanges <- round(avglength * control$percCross)
 
   ########## select the possible feature to swap
   possible   <- intersect(candidates[[1]][, "feature"], candidates[[2]][, "feature"])
