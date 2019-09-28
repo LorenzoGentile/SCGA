@@ -2,7 +2,7 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 SCGA
 ====
-
+https://zenodo.org/badge/DOI/10.5281/zenodo.3464039.svg
 <!-- badges: start -->
 <!-- badges: end -->
 Structured-Chromosome Genetic Algorithm
