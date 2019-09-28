@@ -2,7 +2,6 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 SCGA
 ====
-https://doi.org/10.5281/zenodo.3464039
 <!-- badges: start -->
 <!-- badges: end -->
 Structured-Chromosome Genetic Algorithm
@@ -18,7 +17,9 @@ install_github("LorenzoGentile/SCGA")
 ```
 
 Soon a full descrition of the package will be available <!-- ## Example -->
-
+The software version used for the publication "An optimization approach for designing optimal tracking campaigns for low-resources deep-space missions",IAC2019
+is available here:
+https://doi.org/10.5281/zenodo.3464039
 <!-- This is a basic example which shows you how to solve a common problem: -->
 <!-- ```{r example} -->
 <!-- library(SCGA) -->
