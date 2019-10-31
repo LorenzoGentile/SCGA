@@ -176,10 +176,17 @@ if(is.null(control$tournamentSize))
     wY                                          <- NULL
     wC                                          <- NULL
 
+    if (is.null(control$job)){
+      control$job=list()
+      control$job$algo.name="anonymousAlgo"
+    }
+
+
 if(control$constraint){
   control$fitnessFN <- constraintHandlerFitness
   bestFeasible      <- list(y = Inf, x = NULL, constraint = NULL)
-}
+}else
+  bestFeasible = NULL
     set.seed(control$seed, kind = "Mersenne-Twister", normal.kind = "Inversion")                               # set.seed
 
     if (is.null(feature))                                                                                      # Check feature

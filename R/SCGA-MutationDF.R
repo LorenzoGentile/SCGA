@@ -182,10 +182,9 @@ MutateRepDF <- function(x, i, feature, row,sigmas,createFun,...) {
   } else if(diff > 0){
     # will create a new row with dependent from the current
     for (k in 1:diff) {
-      x <- rbind(x,createFun(feature,feature[[i]]$dependent,id = max(x[, "id"]) + 1,
+      x <- rbind(x,createFun(feature,id = max(x[, "id"]) + 1,
                              prec = x[row, "id"],x=x,...))
-      # x <- rbind(x[1:row,],createFun(feature,feature[[i]]$dependent,id = max(x[, "id"]) + 1,
-      #         prec = x[row, "id"],x=x,...),x[(row+1):nrow(x),])
+
     }
   }
   return(x)
@@ -250,33 +249,31 @@ mutateIntegerValueDF <- function(x,i,feature,sigmas,X,row,report,...){
 muteAllDep <- function(row,x,feature,sigmas,createFun,...){
 
   featOfRow <- x[row,"feature"]
-  dependencesAll<- feature[[featOfRow]]$dependent
+  # if(featOfRow==45)
+  #   browser()
+  dependencesAll <- feature[[featOfRow]]$dependent(x,x[row,"id"],x[row,"value"])
   if(!anyNA(dependencesAll)){
-    idDepExisting <-  x[which(x[,"prec"]==x[row,"id"]),"id"]
-    depNotExisting <- setdiff (dependencesAll,x[which(x[,"id"] %in%idDepExisting ),"feature"])
+    idDepExisting         <- x[which(x[,"prec"]==x[row,"id"]),"id"]
+    depExistingNoNeeded   <- setdiff( x[which(x[,"prec"]==x[row,"id"]),"feature"] ,dependencesAll)
+    depNotExisting        <- setdiff (dependencesAll,x[which(x[,"id"] %in% idDepExisting ),"feature"])
 
     i= x[row,"feature"]
+
     for (k in idDepExisting) {
-      create=feature[[i]]$condOfExistence(dependent=x[which(x[,"id"]==k),"feature"])
-      if(is.na(create) || x[row, "value"]==create )
+      if(! x[which(x[,"id"]==k),"feature"] %in% depExistingNoNeeded)
         x <- mutateDepDF(x=x,i=as.numeric(x[which(x[,"id"]==k),"feature"]),feature=feature,row=which(x[,"id"]==k),sigmas,createFun,...)
       else
         x=x[-which(x[,"id"]==k),,drop=FALSE]
     }
 
     for (k in depNotExisting){
-      create=feature[[i]]$condOfExistence(dependent=k)
-      if(is.na(create)|| x[row, "value"]==create ){
-        # count=get("count",envir=.GlobalEnv)
-        # assign("count",count+1,envir=.GlobalEnv)
 
-        newRow <- createFun(feature,k,id = max(x[, "id"]) + 1,
-                            prec = x[row, "id"],x=x,...)
+        newRow <- createFun(feature,k,id = max(x[, "id"]) + 1,prec = x[row, "id"],x=x,...)
+
         x <- rbind(x,newRow)
       }
 
     }
-  }
   return(x)
 }
 
@@ -370,14 +367,16 @@ NewValueMutation <-
         bounds[2] + 1 - .Machine$double.eps
       ))
     }
-    if (!anyNA(feature[[i]]$dependent)) {
+
+    dependent <- feature[[i]]$dependent(x,id)
+
+    if (!anyNA(dependent)) {
       dependence= ifelse(feature[[i]]$type == "repeater", y[1, "value"],1)
 
       for (k in numeric(dependence)){
-        for (j in 1:length(feature[[i]]$dependent)) {
-          y <-
-            rbind(y, createDepDF(   feature = feature,   i = feature[[i]]$dependent[j],   id = id + 1,
-                                    prec = y[1, "id"],   x=rbind(x,y),   addnames=addnames ))
+
+        for (j in dependent) {
+          y <- rbind(y, createDepDF( feature = feature, i = j, id = id + 1,prec = y[1, "id"], x=rbind(x,y), addnames=addnames ))
           id = max(0, y[, "id"])
         }
       }

@@ -1,5 +1,4 @@
-CreateFeature <- function( bounds, condOfExcistance = NULL,dependence=NULL, label=NULL,types=NULL,others = NULL){
-
+CreateFeature <- function( bounds,dependence=NULL, label=NULL,types=NULL,others = NULL,...){
 
   if(!is.null(bounds$lower) && !is.null(bounds$upper)){
 
@@ -17,16 +16,13 @@ CreateFeature <- function( bounds, condOfExcistance = NULL,dependence=NULL, labe
   if(is.null(dependence))
     dependence <- rep(NA, length(bounds))
 
-  if(is.null(condOfExcistance))
-    condOfExcistance <- rep(NA, length(bounds))
-
   if(is.null(others))
     others <- rep(list(NULL), length(bounds))
 
   else if(length(others)!=length(bounds))
     others <-  TreatOthers(others,length(bounds))
 
-  feature <- mapply(CreateFeat, bounds,condOfExcistance,dependence,label, types, others,SIMPLIFY = FALSE)
+  feature <- mapply(CreateFeat, bounds,dependence,label, types, others,SIMPLIFY = FALSE)
 
   return(feature)
 
@@ -63,12 +59,11 @@ TreatOthers <- function(others,dim){
     stop("ERROR: wrong in dimensions of others")
 }
 
-CreateFeat<- function(bounds,condOfExcistance,dependence,label,types, others){
+CreateFeat<- function(bounds,dependence,label,types, others){
 
   feature <- list(
     bound                 = CreateBoundsInt(bounds),
-    condOfExistence       = CreateCondOfExcistance(condOfExcistance),
-    dependent             = dependence,
+    dependent             = CreateDependent(dependence),
     type                  = types,
     label                 = label
   )
@@ -89,7 +84,7 @@ CreateFeat<- function(bounds,condOfExcistance,dependence,label,types, others){
 CreateBoundsInt <- function(FUN){
   return(ifelse(is.function(FUN),FUN,function(...){return(FUN)}))
 }
-CreateCondOfExcistance <- function(FUN){
+CreateDependent <- function(FUN){
   return(ifelse(is.function(FUN),FUN,function(...){return(FUN)}))
 }
 
@@ -98,7 +93,7 @@ CreateGetBounds<- function(feature){
   getBounds        <- function(i, x = NULL, id = NULL, ...) { feature[[i]]$bound(x, id, ...) }           # Create Get bounds
   return(getBounds)
 }
-CreateGetCondOfExistence<- function(feature){
-  getExistence       <- function(i, x = NULL, id = NULL, ...) { feature[[i]]$condOfExistence(x, id, ...) }           # Create Get bounds
-  return(getExistence)
+CreateGetDependent<- function(feature){
+  getDependent    <- function(i, x = NULL, id = NULL, ...) { feature[[i]]$dependent(x, id,value, ...) }           # Create Get bounds
+  return(getDependent)
 }

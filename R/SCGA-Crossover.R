@@ -86,7 +86,8 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
   ########## Crossover operations
 
   for (i in featuretochange) {
-
+# if(i==45)
+#   browser()
     ########## Choose the index to swap of the first
 
     index  <- mapply(IndicesToSwap, x. = candidates,avoid = avoid, MoreArgs = list(i=i), SIMPLIFY=FALSE)

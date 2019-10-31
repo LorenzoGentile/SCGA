@@ -13,8 +13,8 @@ createCandidate <- function(X,feature,...){
   x = NULL
   set.seed(X)
 
-  dependent    <- purrr::map(feature,"dependent") %>% unlist  %>% as.numeric
-  dependent    <-  dependent[!is.na(dependent)]
+  dependent    <- sapply(feature, function(x) x$dependent(),simplify = F)
+  dependent    <- dependent[!is.na(dependent)] %>% unlist() %>% unique()
   notdependent <- setdiff(1:length(feature),dependent)
 
 
@@ -22,7 +22,9 @@ createCandidate <- function(X,feature,...){
 
     x <- rbind(x,createDepDF(feature,i,id=max(0,nrow(x))+1,xDone=x,...))
   }
+
   return(x)
+
 }
 
  createDepDF <- function(feature, i, id, prec = NA, x = NULL, xDone=NULL, addnames = NULL, newCand=FALSE,...) {
@@ -60,18 +62,21 @@ createCandidate <- function(X,feature,...){
       bounds[2] + 1 - .Machine$double.eps
     ))
   }
-  if (!anyNA(feature[[i]]$dependent)) {
+
+  dependent <- feature[[i]]$dependent(x=x,id=id,value =x[which(x[, "id"]==id), "value"] )
+
+  if (!anyNA(dependent)) {
+
     dependence= ifelse(feature[[i]]$type == "repeater", x[1, "value"],1)
 
     for (k in numeric(dependence)){
-      for (j in 1:length(feature[[i]]$dependent)) {
-        create=feature[[i]]$condOfExistence(dependent=feature[[i]]$dependent[j],x=rbind(xDone,x))
-        if(is.na(create)|| x[, "value"]==create ){
-        x <-
-          rbind(x,createDepDF(  feature = feature,  i = feature[[i]]$dependent[j],  id = id + 1,
+
+      for (j in dependent) {
+
+        x <-  rbind(x,createDepDF(  feature = feature,  i = j,  id = id + 1,
                                 prec = x[1, "id"],  xDone=rbind(xDone,x),  addnames=addnames,newCand = TRUE))
         id = max(0, x[, "id"])
-        }
+
       }
     }
   }

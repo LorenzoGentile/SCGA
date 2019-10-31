@@ -63,10 +63,11 @@ Plotsigmas <- function(toCompare, generations, path,printIt,sigma0,subpath="/opt
   return(g)
 }
 
-PlotPopulation <- function(newPop, generations,path,printIt,subpath="/opt-gen-"){
+PlotPopulation <- function(toCompare, generations,path,printIt,subpath="/opt-gen-"){
+
   if(!is.list(toCompare[[1]])){
-    toCompare <- sapply(newPop, function(x){
-      out= rep(NA, 60)
+    toCompare <- sapply(toCompare, function(x){
+      out= rep(NA, length(feature))
       out[x[,"feature"]]=x[,"value"]
       out
     }
@@ -82,7 +83,7 @@ PlotPopulation <- function(newPop, generations,path,printIt,subpath="/opt-gen-")
     toCompareDF           = as.data.frame(toCompareDF)
     toCompareDF$variable  = as.factor(toCompareDF$variable)
 
-    g <- ggplot(toCompareDF,aes(x= value,fill=variable))  +geom_histogram()+facet_wrap(~variable, scales="free")
+    g <- suppressWarnings( ggplot(toCompareDF,aes(x= value,fill=variable))  +geom_histogram()+facet_wrap(~variable, scales="free"))
 
     if(printIt)
       ggsave(paste0(path,"/opt-gen-",generations,".png"), width = 40, height = 20, units = "cm",g)

@@ -24,12 +24,10 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
   # TODO : ERROR THAT HAS TO BE FIXED
   pb$update(min(.99,evaluations/control$maxEvaluations))
   pb$tick()
-  control$job=list()
-  control$job$algo.name="ffd"
 
   ####### plots
 
-  if( generations %% control$plotInterval == 0 && any(c(control$plotSigma,control$plotEvolution,control$plotPopulation,control$plotFitness))){
+  if( (generations %% control$plotInterval == 0 || generations == 1) && any(c(control$plotSigma,control$plotEvolution,control$plotPopulation,control$plotFitness))){
     G1 =G2 =G3= NULL
 
     if(!file.exists(file.path("runResults")) && control$printPlot)

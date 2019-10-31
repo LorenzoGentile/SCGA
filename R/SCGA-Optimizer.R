@@ -97,10 +97,10 @@ SCGA <-
 
       tictoc::tic("\n Evaluation time elasped ")
 
-      # count=get("count",envir = .GlobalEnv)
-      # if(evaluations>=12962)
+
+      # if(evaluations>=914)
       #   browser()
-      # assign("count",count+1,envir = .GlobalEnv)
+
 
       ########## During the loop it saves elitism evaluations
 
@@ -326,8 +326,7 @@ SCGA <-
         result <- Output(best=best,bestRel=bestRel, control,consBest=consBest,consBestRel=consBestRel,constList=constList,evaluations=evaluations,
                          eval= result$evaluations, fitness=fitness,generations=generations,identicX=identicX,media=media, NAs=NAs, result=result, y=yForResults,x=x,sigma=sigma,sigma0=sigma0,stalling=stalling, pb=pb,cRef=control$cRef)
       }
-
-      ####### increment generations
+  ####### increment generations
       generations    <- generations + 1
 
     }
