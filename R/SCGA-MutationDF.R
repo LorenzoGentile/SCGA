@@ -1,7 +1,6 @@
 MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
                        dontChange=dontChange, replicates=F,repairMut=NULL,
                        updateSigma,control,...) {
-
   index       <- X
   x           <- pop
   back        <- x <- x[[index]]
@@ -11,7 +10,7 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
   toChange <- sum(x[,"feature"] %in% setdiff(x[,"feature"],dontChange))
 
   possible    <- setdiff(unique(x[,"feature"]),dontChange)
-  repetition  <- probability                                        <- rep(1, length(possible)) #deafault
+  repetition  <- probability          <- rep(1, length(possible)) #deafault
 
 
   r <- rle(sort(x[,"feature"]))
@@ -19,7 +18,7 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
 
 
   maxMuting   <- round(toChange * control$percMut * rnorm(1,1,.2))
-  exchanges   <- min(toChange,maxMuting)
+  exchanges   <- max(min(toChange,maxMuting),1)
 
   if (length(possible) > 1)
     featuretochange <- sample(possible,exchanges,prob = probability*repetition,replace = T)
@@ -28,8 +27,10 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
     featuretochange <- rep(possible,exchanges)
 
 
-  if(updateSigma)
+  if(updateSigma){
     sigmas <- updatesigmas(sigmas,unique(featuretochange),feature)
+  # sigmas<- pmin(sigmas*1.3,sigmasT)
+  }
 
   for (i in featuretochange) {
 
@@ -42,6 +43,7 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
     x.copy=x
     x <- mutateDepDF( x=x ,i=i,feature=feature,row=row,sigmas=sigmas,createFun,...)
 
+
     if(any(is.na(x[,"value"]))){
       print("ERROR in Mutation: NA created")
       break
@@ -52,6 +54,8 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
 
   if(!is.null(repairMut))
     x <- repairMut(x,feature)
+
+
   # if(nrow(x)==nrow(back))
   #   print(cbind(back[,1],back[,1]==x[,1],x))
 
@@ -75,17 +79,19 @@ mutateDepDF <- function(x,i, feature,row,sigmas,createFun,...) {
   return(x)
 }
 
-MutateRealDF <- function(x,i,feature,row,sigmas,createFun,report,...){
-  report=FALSE
+MutateRealDF <- function(x,i,feature,row,sigmas,createFun,report,generation,...){
+  report=F
   sigmaDash <- sigmas[i]
   if(report){
 
     mutationReport               <-  get("mutationReport",envir = .GlobalEnv)                # report
     nextReport                   <- nrow(mutationReport) +1                                  #report
-    mutationReport               <- rbind(mutationReport,matrix(NA,1,5))
+    mutationReport               <- rbind(mutationReport,matrix(NA,1,6))
     mutationReport[nextReport,1] <- x[row,"value"]                                           #report
     mutationReport[nextReport,4] <- i                                                        #report
     mutationReport[nextReport,5] <- sigmaDash                                                #report
+
+    mutationReport[nextReport,6] <- generation                                               #report
 
   }
 
@@ -113,19 +119,20 @@ MutateRealDF <- function(x,i,feature,row,sigmas,createFun,report,...){
 
 }
 
-MutateCatDF <- function(x,i,feature,row,sigmas,createFun,report,...){
+MutateCatDF <- function(x,i,feature,row,sigmas,createFun,report,generation,...){
 
   sigmaDash                      <- sigmas[i]
-  report                         <- FALSE
+  report=FALSE
 
   if(report){
 
     mutationReport               <-  get("mutationReport",envir = .GlobalEnv)         # report
     nextReport                   <- nrow(mutationReport) +1                           # report
-    mutationReport               <- rbind(mutationReport,matrix(NA,1,5))
+    mutationReport               <- rbind(mutationReport,matrix(NA,1,6))
     mutationReport[nextReport,1] <- x[row,"value"]                                    # report
     mutationReport[nextReport,4] <- i                                                 # report
     mutationReport[nextReport,5] <- sigmaDash                                         # report
+    mutationReport[nextReport,6] <- generation                                        #report
   }
 
   firstmatr                      <- CrossDFRet(x,x[row,"id"])
@@ -182,7 +189,7 @@ MutateRepDF <- function(x, i, feature, row,sigmas,createFun,...) {
   } else if(diff > 0){
     # will create a new row with dependent from the current
     for (k in 1:diff) {
-      x <- rbind(x,createFun(feature,id = max(x[, "id"]) + 1,
+      x <- rbind(x,createFun(feature,feature[[i]]$dependent(),id = max(x[, "id"]) + 1,
                              prec = x[row, "id"],x=x,...))
 
     }
@@ -196,7 +203,7 @@ MutateIntDF <- function (x,i ,feature,row,sigmas,createFun,...){
   return(x)
 }
 
-mutateIntegerValueDF <- function(x,i,feature,sigmas,X,row,report,...){
+mutateIntegerValueDF <- function(x,i,feature,sigmas,X,row,report,generation,...){
 
   ######Just for this problem
   report=FALSE
@@ -209,10 +216,11 @@ mutateIntegerValueDF <- function(x,i,feature,sigmas,X,row,report,...){
     mutationReport               <- get("mutationReport",envir = .GlobalEnv) # report
 
     nextReport                   <- nrow(mutationReport) +1                    #report
-    mutationReport = rbind(mutationReport,matrix(NA,1,5))
+    mutationReport = rbind(mutationReport,matrix(NA,1,6))
     mutationReport[nextReport,1] <- x                                        #report
     mutationReport[nextReport,4] <- i                                        #report
     mutationReport[nextReport,5] <- sigmaDash                                #report
+    mutationReport[nextReport,6] <- generation                               #report
   }
   bounds <- feature[[i]]$bound( x=X, id=X[row,"id"])
 

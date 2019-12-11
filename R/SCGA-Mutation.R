@@ -1,16 +1,15 @@
-Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nVar,sigma,sigma0){
-
+Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nVar,sigma,sigma0,generation,oldPopulation){
+# browser()
   allMutated <- MutPool <- which((sample( c(0, 1),   prob = c((1 - mutRate), mutRate),
                                           size = control$sizeToEval,   replace = TRUE ) == 1)) + control$elitism
-
-  identicCandidates <- checkIdentical(newPop)
+toCompare= append(newPop,oldPopulation)
+  identicCandidates <- checkIdentical(newPop,toCompare,control$elitism)
   identicX          <-  firstidenticX <-  length(identicCandidates)
 
   attempts <- 1
-
-  while(identicX !=0 || attempts == 1 || attempts >= 20){
-
-    identicCandidates <- checkIdentical(newPop)
+  while(identicX !=0 || attempts == 1 || attempts <= 20){
+print(attempts)
+    identicCandidates <- checkIdentical(newPop,toCompare,control$elitism)
     identicX = length(identicCandidates)
 
     if(identicX!=0){
@@ -34,20 +33,18 @@ Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nV
       # }
     }
 
-    if(control$updateSigma){
+    if(control$updateSigma & attempts==1){
 
       ########## update tau
       sigma[,(length(sigma0)-7):length(sigma0)]<- matrix(rep(updateTau(nVar=nVar),nrow(sigma)), nrow(sigma),byrow = T) # 7 is due to the tau and tau local
 
     }
-
-    allMutated <- c(allMutated,MutPool)
     if(!is.empty(MutPool)){
       MutResult <-
         APPLY( X = matrix(MutPool, , 1), MARGIN = 1,  MutationDF, pop = newPop,
                feature = feature, maxMuting = ChangeMut, sigmas = sigma, createFun = control$createMutFun,
                dontChange = control$dontChangeMut, addnames = control$keep, repairMut = NULL,
-               updateSigma= control$updateSigma ,report=control$mutationReport,control=control)
+               updateSigma= control$updateSigma ,report=control$mutationReport,control=control,generation=generation)
 
       newPop[MutPool] <- purrr::map(MutResult,1)
 
@@ -59,7 +56,7 @@ Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nV
 
       MutPool           <- NULL
 
-      identicCandidates <- checkIdentical(newPop)
+      identicCandidates <- checkIdentical(newPop,toCompare,control$elitism)
       identicX          <- length(identicCandidates)
     }
     attempts          <- attempts + 1
@@ -70,6 +67,7 @@ Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nV
     newPop   = newPop,
     sigma    = sigma,
     identicX = firstidenticX,
-    allMutated = unique(allMutated)
+    allMutated = unique(allMutated),
+    mutPool = allMutated
   ))
 }

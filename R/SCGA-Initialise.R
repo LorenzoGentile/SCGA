@@ -69,6 +69,7 @@ Initialise <-
       plotCross               = FALSE,
       plotCrossR              = FALSE,
       plotEvolution           = FALSE,                     # Print evolution of bests
+      plotEvolutionLimit      = Inf,
       plotFitness             = FALSE,
       plotPopulation          = FALSE,
       plotSigma               = FALSE,                     # Print maximum values of sigmas
@@ -175,6 +176,7 @@ if(is.null(control$tournamentSize))
     consBest      <- consBestRel <- bestRel     <- NULL
     wY                                          <- NULL
     wC                                          <- NULL
+    stallRef                                    <- Inf
 
     if (is.null(control$job)){
       control$job=list()
@@ -257,7 +259,7 @@ if(control$constraint){
         evaluateFun <- function(x,...) SAPPLY( X = x,Fun,...)
 
       else if (!control$vectorized && control$vectorOnly )
-        evaluateFun <- function(x,...) SAPPLY( X = x[1:length(x)][,"value"], Fun,...)
+        evaluateFun <- function(x,...)  SAPPLY( X = x, function (x) Fun(x[,"value"]),...)
 
 
 
@@ -285,6 +287,7 @@ if(control$constraint){
       SAPPLY       = SAPPLY,
       stalling     = stalling,
       stallinFlag  = stallinFlag,
+      stallRef     = stallRef,
       ws           = ws,
       wY           = wY,
       wC           = wC

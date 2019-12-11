@@ -49,50 +49,77 @@ SCGA <-
     ########## Start the main loop #########################################################################################
     cat("\n Start optimization loop \n")
     pb <- progress::progress_bar$new(total = control$maxEvaluations,format = "  optimising [:bar] :percent eta: :eta", clear = TRUE, width= 60)
-
+    mutationReport               <- get("mutationReport",envir = .GlobalEnv) # report
+    mutationReport = matrix(NA, 1,6)
+    assign("mutationReport",mutationReport, envir = .GlobalEnv)               #report
     while (evaluations <= (control$maxEvaluations-control$size+control$elitism) && abs(control$target - best) >= control$convergence ) {
       # if(generations ==18)
       #   browser()
+      # print("sd")
+      # print(sapply(1:nrow(newPop[[1]]),function(i)  map(newPop,i) %>% as.numeric() %>% sd))
+      # print("Candidates")
+      # print(sapply(1:nrow(newPop[[1]]),function(i)  map(newPop,i) %>% as.numeric() ))
+      # if(best <= 16.52)
+      #   browser()
+      #
+      # if(generations%%50 ==0)
+
+      if(generations %% 30==0 && generations!=1){
+        if (control$printWF){
+          plots =sapply(x[order(yForResults)], plotWindFarm,retG=T,simplify = F)
+          saveMorePlot(plots,paste0("generation", generations,".pdf"))
+        }
+      }
+
+# browser()
+      # #Check bounds
+      # if( any(! sapply(newPop, function(x) out = x[,1]<=sapply(x[,"feature"],function(x) max(feature[[x]]$bound())) & x[,1]>=sapply(x[,"feature"],function(x)feature[[x]]$bound()[1]))))
+      # out = x[,1]<=sapply(x[,"feature"],function(x)feature[[x]]$bound()[2]) & x[,1]>=sapply(x[,"feature"],function(x)feature[[x]]$bound()[1])
       tictoc::tic("Optimisation loop time elasped")
       ####### Stall generations #################################################################################################
-      if(stalling == control$maxStallGenerations){
+      if(stalling == control$maxStallGenerations || stalling > control$localOptGenerations){
+
+
+
+
+
+
+        ####### Local optimisation #################################################################################################
+        if (stalling > control$localOptGenerations){
+          print("locale")
+          active=1:length(feature)
+          # LocalOptList <- LocalOptimisation(control,feat,newPop,y,active,evaluations,sigma,result,generations,...)
+
+          LocalOptList <- localCassini(newPop[[1]][,1],newPop,evaluations,y,result,...)
+          newPop           <- LocalOptList$newPop
+          evaluations      <- LocalOptList$evaluations
+          y                <- LocalOptList$y
+          result           <- LocalOptList$result
+          stallRef         <- Inf
+          result$localOpt[generations] <- TRUE
+          rm(LocalOptList)
+
+          if(evaluations >= control$maxEvaluations)
+            return(result)
+
+        }
+        ########## reinitialise the population and sigma
+        tempControl            <- control
+        tempControl$size       <- control$size - 1
+        initPopAndSigmaList    <- suppressWarnings( InitPopAndSigma(control=tempControl,feature,LAPPLY))
+        newPop[2:control$size] <- initPopAndSigmaList$newPop
+        sigma[2:control$size,] <- initPopAndSigmaList$sigma
+        rm(initPopAndSigmaList)
+        rm(tempControl)
+
 
         ########## Reinitialise the stalling flags
 
         stallingFlag <- TRUE
         stalling    <- 0
 
-        ########## reinitialise the population and sigma
-        tempControl            <- control
-        tempControl$size       <- control$size - 1
-        initPopAndSigmaList    <- suppressWarnings( InitPopAndSigma(control=tempControl,feature,LAPPLY))
-        newPop[1:control$size] <- initPopAndSigmaList$newPop
-        sigma[1:control$size,] <- initPopAndSigmaList$sigma
-        rm(initPopAndSigmaList)
-        rm(tempControl)
-
-
       }
-
-
-
-      ####### Local optimisation #################################################################################################
-      if (stalling > control$localOptGenerations){
-
-        LocalOptList <- LocalOptimisation(control,feat,newPop,y,active,evaluations,sigma,result,generations,...)
-        newPop           <- LocalOptList$newPop
-        evaluations      <- LocalOptList$evaluations
-        y                <- LocalOptList$y
-        result           <- LocalOptList$result
-        rm(LocalOptList)
-
-        if(evaluations >= control$maxEvaluations)
-          return(result)
-
-      }
-
       ####### Evaluation #################################################################################################
-
       x <- newPop # duplicate the population for convenience
 
       tictoc::tic("\n Evaluation time elasped ")
@@ -160,7 +187,7 @@ SCGA <-
 
       ########## Fitness assignement
       if(control$constraint){
-
+# browser()
         ## precompute the feiasible and unfe
         feasible   <- which(constraint <= control$cRef)
         unfeasible <- which(constraint > control$cRef)
@@ -186,8 +213,9 @@ SCGA <-
         }
         # if(!is.empty(feasible))
         #   browser()
-        print( bestFeasible$y )
-        constList                  <- constraintHandlerFitness(y,constraint,wY,wC,control$cRef,evaluations, control,...)
+        # print( bestFeasible$y )
+        constList                  <- constraintHandlerFitness(y,constraint,control$cRef,evaluations, control,...)
+
         fitness                    <- constList$fitness
         feasible                   <- constList$feasible
         feasibleRelax              <- constList$feasibleRelax
@@ -195,6 +223,7 @@ SCGA <-
         constraintForResults       <- constraint
         wC                         <- constList$wC
         wY                         <- constList$wY
+        # print( plotFitness(y,constList,fitness))
 
       }else{
 
@@ -204,7 +233,7 @@ SCGA <-
           ws          <- max(y[!is.na(y)])
           y[is.na(y)] <- ws + (mean(y[!is.na(y)])) * 0.1
         }
-
+        # browser()
         fitness         <- control$fitnessFN(y)
 
       }
@@ -215,7 +244,8 @@ SCGA <-
       # if(!is.empty(constList$feasible))
       #   browser()
       if (as.logical(control$elitism)) {
-
+        # if(any(y)<1)
+        #   browser()
         e = sort(fitness,index.return = T, decreasing = T)$ix        # if elitism i save the control$elitism best candidates
 
 
@@ -230,13 +260,28 @@ SCGA <-
         if(control$constraint)
           constraint            <- constraint[e]
       }
+      # print(newPop[[1]])
 
+
+      # browser()
       ####### Crossover ####################################################################################################
       if(control$useCrossover){
 
-        CrossoverList <- Crossover(APPLY,ChangeCross,control,elitismSigma, feature, fitness,newPop,sigma,x,cl,...)
+        CrossoverList <- Crossover(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,x,cl,...)
         newPop        <- CrossoverList$newPop
         sigma         <- CrossoverList$sigma
+        analysePerformance=F
+        if(analysePerformance){
+
+          CrossPool <- CrossoverList$CrossPool
+
+            out = analyseOperationPerformance("crossover",list = list(CrossPool=CrossPool,yOld = yForResults[control$elitism:length(yForResults)] ,
+                                      toEvaluate = newPop[(control$elitism+1):length(newPop)]), evaluateFun=evaluateFun,...)
+
+            crossoverY                                 = out[[1]]
+            result$performance[generations,"crossover"] = out[[2]]
+        }
+
         rm(CrossoverList)
 
       } else
@@ -244,11 +289,16 @@ SCGA <-
 
       ####### Mutation #################################################################################################
 
-
-      MutationList <- Mutation(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nVar,sigma,sigma0)
+      MutationList <- Mutation(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nVar,sigma,sigma0,generations,oldPopulation=x)
       newPop       <- MutationList$newPop
       sigma        <- MutationList$sigma
       identicX     <- MutationList$identicX
+      mutPool      <- MutationList$mutPool
+      if(analysePerformance &!is.empty(mutPool)){
+
+      result$performance[generations,"mutation"]=analyseOperationPerformance("mutation",list = list(yOld = crossoverY[mutPool-1] ,
+                                                                                              toEvaluate = newPop[mutPool]), evaluateFun=evaluateFun)
+      }
       rm(MutationList)
 
       ####### Update output #################################################################################################
@@ -256,10 +306,7 @@ SCGA <-
       result$NAs[generations]           <- NAs
 
       best                              <- y[1]
-
-      print(x[which.max(fitness)])
-
-
+      # best                              <- min(y)
 
       ######### if Constraints
       if(control$constraint){
@@ -283,19 +330,44 @@ SCGA <-
       result$ybesthistory[generations]      <- best
 
 
-
+      control$tolerance=.01*min(y)
       ######### Stalling
 
       if(control$constraint){
 
-        ybesthistoryFeas = result$ybesthistory
-        ybesthistoryFeas[result$consBesthistory > control$cRef ] <- Inf
-        result$stalling       <- stalling <- generations - which.min(ybesthistoryFeas)
+        lastLocal    <- max(which(result$localOpt==TRUE))
+        lastLocal    <- ifelse(lastLocal==1,0,lastLocal)
+        ytoConsider  <- result$ybesthistoryFeas[lastLocal:generations]
 
-      }else
-        result$stalling       <- stalling <- generations - which.min(result$ybesthistory)
+        if(min(ytoConsider) <= stallRef - control$tolerance){
+
+          stallRef <- min(ytoConsider)
+
+          result$stalling       <-  stalling <- 0
+
+        } else
+          result$stalling       <-  stalling <- stalling + 1
 
 
+      }else{
+
+        lastLocal    <- max(which(result$localOpt==TRUE))
+        # lastLocal    <- ifelse(lastLocal==1,0,lastLocal)
+        ytoConsider  <- result$ybesthistory[lastLocal:generations]
+
+        if(min(ytoConsider) <= stallRef - control$tolerance){
+
+          stallRef <- min(ytoConsider)
+
+          result$stalling       <-  stalling <- 0
+
+        } else
+          result$stalling       <-  stalling <- stalling + 1
+
+      }
+
+      if(is.infinite( stalling ))
+        result$stalling       <-  stalling <- 0
 
       if (control$saveX)
         result$x[[generations]]         <- x
@@ -326,19 +398,24 @@ SCGA <-
         result <- Output(best=best,bestRel=bestRel, control,consBest=consBest,consBestRel=consBestRel,constList=constList,evaluations=evaluations,
                          eval= result$evaluations, fitness=fitness,generations=generations,identicX=identicX,media=media, NAs=NAs, result=result, y=yForResults,x=x,sigma=sigma,sigma0=sigma0,stalling=stalling, pb=pb,cRef=control$cRef)
       }
-  ####### increment generations
+      ####### increment generations
       generations    <- generations + 1
+      print(x[which.max(fitness)])
 
+    # if(!exists("posOld"))
+    # posOld=NULL
+    # posOld <- plotWindFarm(x[[which.max(fitness)]],posOld)
+    #
     }
     ########## Finalize the output ############################################################################################
     if(control$constraint){
 
-      suppressWarnings(summaryDf <- data.frame(result$ybesthistory,result$consBesthistory,control$cRef,result$evaluations, result$NAs,control$seed))
+      suppressWarnings(summaryDf <- data.frame(result$a,result$consBesthistory,control$cRef,result$evaluations, result$NAs,control$seed))
       colnames(summaryDf) = c("yBest", "constBest","cRef","evaluations","NAs","seed")
 
     }else{
 
-      suppressWarnings( summaryDf <- data.frame(result$ybesthistory,result$evaluations, result$NAs,control$seed))
+      suppressWarnings( summaryDf <- data.frame(result$ybesthistory[!is.na(result$ybesthistory)],result$evaluations, result$NAs[!is.na(result$ybesthistory)],control$seed))
       colnames(summaryDf) = c("yBest","evaluations","NAs","seed")
 
     }

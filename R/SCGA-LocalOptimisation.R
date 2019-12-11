@@ -13,17 +13,17 @@ LocalOptimisation <- function(control,feat,newPop,y,active,evaluations,sigma,res
   localActive      <- which(x0[,"feature"] %in% active[RealOptVar])
   localNotActive   <- setdiff(1:nrow(x0),localActive)
   localActiveFeat  <- x0[which(x0[,"feature"] %in% RealOptVar),"feature"]
-  boundsLocalOpt   <- sapply(localActiveFeat, function(i) feature[[i]]$bound())
+  boundsLocalOpt   <- t(sapply(localActiveFeat, function(i) feature[[i]]$bound()))
   # boundsLocalOpt   <- t(apply(as.matrix(localActiveFeat), 1,getBounds))
-  startPoint       <- x0[localActive,"value"]- boundsLocalOpt[,1]
+  startPoint       <- x0[localActive,"value"] - boundsLocalOpt[,1]
   startPoint       <- startPoint /(boundsLocalOpt[,2]-boundsLocalOpt[,1])
 
   objLocal<- function(x,...){
 
     X=x0
     xScaled= x*(boundsLocalOpt[,2]-boundsLocalOpt[,1])+boundsLocalOpt[,1]
-    X[localActive,"value"]=xScaled
-    Fun(X,...)/y0
+    X[localActive,"value"] = xScaled
+    control$Fun(X,...)/y0
 
   }
 
@@ -35,7 +35,7 @@ LocalOptimisation <- function(control,feat,newPop,y,active,evaluations,sigma,res
   # y[[1]]=res$value*y0
   # res$fevals
 
-  res <-optim(par=startPoint,objLocal,method = c("L-BFGS-B"),lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),control=list(maxit=10,trace=5),...)
+  res <- optim(par=startPoint,objLocal,method = c("L-BFGS-B"),lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),control=list(maxit=20,trace=5),...)
 
   newPop[[1]][localActive,"value"] <- res$par*(boundsLocalOpt[,2]-boundsLocalOpt[,1])+boundsLocalOpt[,1]
   y[[1]]                           <- res$value*y0

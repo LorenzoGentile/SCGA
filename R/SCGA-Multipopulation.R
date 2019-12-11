@@ -18,7 +18,6 @@
 
     ####### Update output #################################################################################################
     evaluations           <- evaluations + sum( purrr::map(out,"evaluations") %>% as.integer() )
-    best                  <- min(purrr::map(out,"ybest") %>% as.numeric())
 
     #result$NAs[generations]           <- sum( purrr::map(out,"NAs") %>%unlist() )
     result$NAs[generations] =0         #################### to change##########################
@@ -46,8 +45,11 @@
     ####### print output
     if(control$printIter){
       media <- c(media, mean(result$yForResults, na.rm = TRUE))
-      result <-  Output(best, control,evaluations, generations,media, NAs=result$NAs[generations], result, y=result$yForResults,
-                           x = purrr::map(out,"lastX"),sigma = purrr::map(out,"lastSigma"),out[[1]]$sigma0,stalling, pb)       # TODO correct this in a proper way
+#
+#       result <-  Output(best=best, control=control,evaluations=evaluations, generations=generations,media=media, NAs=result$NAs[generations], result, y=result$yForResults,
+#                            x = purrr::map(out,"lastX"),sigma = purrr::map(out,"lastSigma"),sigma0=out[[1]]$sigma0,stalling=stalling, pb=pb)       # TODO correct this in a proper way
+
+
     }
 
     ####### increment generations

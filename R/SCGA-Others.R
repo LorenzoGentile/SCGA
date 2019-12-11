@@ -1,3 +1,21 @@
+analyseOperationPerformance <- function(operator,list,evaluateFun){
+
+  list2env(list,envir = environment())
+  ynew <- evaluateFun(toEvaluate)
+  if(operator=="mutation"){
+    performance <- sum (yOld > ynew)/length(yOld)
+    return(performance)
+  }
+  if(operator=="crossover"){
+    CrossPool <- CrossPool[sort(rep(1:nrow(CrossPool),2))[1:length(toEvaluate)],]
+    yOld      <- apply(CrossPool, 1, function(i) min(yOld[i[1]],yOld[i[2]]))
+    performance <- sum (yOld > ynew)/length(yOld)
+    return(list(ynew,performance))
+  }
+
+}
+
+
 RestartFromBackup <- function(resumeFrom){             #Function still To be checked
   load(paste0(resumeFrom,".RData"))
   return(list(
@@ -98,13 +116,13 @@ InitPopAndSigma <- function(control,feature,LAPPLY){
 }
 
 assignFitnessProportional <- function(y) {
-
   ## scale the observation between 0 and 1. assigning 1 to the lowest value and 0 to the highest -> Minimization
   minumProb=0.05
-  fitness = -y
-  fitness = fitness - min(fitness, na.rm = TRUE)+minumProb
-
-  fitness = fitness / (max(fitness, na.rm = TRUE)-min(fitness, na.rm = TRUE) + minumProb)
+  # fitness = -y
+  # fitness = fitness - min(fitness, na.rm = TRUE)+minumProb
+  #
+  # fitness = fitness / (max(fitness, na.rm = TRUE)-min(fitness, na.rm = TRUE) + minumProb)
+  fitness <- scales::rescale(-y)
   fitness[which(is.na(fitness))]=minumProb
 
   return(fitness)
@@ -181,6 +199,34 @@ selectPoolRouletteWheel <- function(fitness, size = (floor(length(fitness) / 2) 
   }
   return(newpool)
 }
+selectBest <- function(fitness, size = (floor(length(fitness) / 2) + 1),...) {
+
+  nbest=100
+  newpool=matrix(ncol=2,nrow=size) #initiliaze the matrix
+  choices <- 1:nbest    #create the indexes
+  indexes <- order(fitness,decreasing=T)[choices]
+  fitness <- fitness[indexes]
+  newpool[,1] <- # assign values to the first column. prob is the fitness
+    sample(
+      nbest,
+      size,
+      replace = TRUE,
+      prob = fitness
+    )
+  for (j  in 1:size) { #assign values to the second column.the value of the correspondent first column is excluded
+    newpool[j,2] <-
+      sample(
+        (choices[-newpool[j,1]]),
+        1,
+        replace = TRUE,
+        prob = fitness[-newpool[j,1]]
+      )
+
+  }
+  newpool[,1] <- indexes[newpool[,1]]
+  newpool[,2] <- indexes[newpool[,2]]
+  return(newpool)
+}
 
 
 OptimizerClass<- function(job=NULL,resumeFrom=NULL,control){
@@ -197,9 +243,11 @@ OptimizerClass<- function(job=NULL,resumeFrom=NULL,control){
                  sigma              = list(),
                  control            = control,
                  job                = job,
+                 performance        = matrix(NA,control$maxGenerations,2,dimnames = list(NULL,c("crossover","mutation"))),
                  resumeFrom         = resumeFrom,
                  NAs                = rep(NA,control$maxGenerations),
                  ybesthistory       = rep(NA,control$maxGenerations),
+                 localOpt           = c(TRUE,rep(FALSE,control$maxGenerations-1)),
                  sigma              = rep(list(NA),control$maxGenerations),
                  x                  = rep(list(NA),control$maxGenerations),
                  plots              =list(population= list(generations=NULL, plot=NULL),
@@ -211,7 +259,6 @@ OptimizerClass<- function(job=NULL,resumeFrom=NULL,control){
 }
 
 initSigma <- function(feat,donttouch){
-
 
   active=as.numeric(setdiff(getValues(x=feat, name = "label", Unique = F),donttouch))
   feature <- feat[active]
@@ -232,7 +279,7 @@ initSigma <- function(feat,donttouch){
   }
 
   ranges <- numeric(length(feat))
-  ranges[active] <- boundsCorr[,2]- boundsCorr[,1]
+  ranges<- boundsCorr[,2]- boundsCorr[,1]
 
   ireal <-
     which(getValues(x=feat, "type", Unique = FALSE) == "numeric")
@@ -246,7 +293,7 @@ initSigma <- function(feat,donttouch){
 
   sigma0 <- numeric(length(feat))
 
-  sigma0[ireal] <- ranges[ireal] * 0.1
+  sigma0[ireal] <- ranges[ireal] * 0.1 * .5
 
   sigma0[c(iint, irep)] <- ranges[c(iint, irep)] * 0.33
 
@@ -297,7 +344,7 @@ getValues <- function(x, name="label", Unique = TRUE,forC=NA) {
 
   return(unlist(out))
 }
-constraintHandlerFitness <- function(y,con,wY,wC,cRef,evaluations, control,...){
+constraintHandlerFitness <- function(y,con,cRef,evaluations, control,...){
 
   ###### Define worst in current population  ########
   wY               <- max(y,na.rm = T)
@@ -312,7 +359,7 @@ constraintHandlerFitness <- function(y,con,wY,wC,cRef,evaluations, control,...){
 
   feasible        <- which( con <= cRef )
   notFeasible     <- which( con > cRef )
-
+  # browser()
   if(!is.empty(feasible))
     wY               <- max(y[feasible])
 
@@ -371,26 +418,34 @@ calcCurrCref <- function(evaluations, maxEvalutions,pureFeasibility ,maxRelaxati
 #
 # }
 #
-checkIdentical <- function(newPop){
+# checkIdentical <- function(newPop,...){
+#   toMutate=NULL
+#
+#   for (i in (length(newPop)-1):1) {
+#     for(j in (i+1):(length(newPop))){
+#
+#       if(identical(newPop[[i]][,-c(3,4)],newPop[[j]][,-c(3,4)])){
+#         toMutate=c(toMutate,j)
+#         break()
+#       }
+#
+#     }
+#
+#   }
+#   return(toMutate)
+#
+# }
+
+
+checkIdentical <- function(newPop,toCompare,elitism){
   toMutate=NULL
+  toMutate = sapply(1:(length(newPop)-1), function(i){ any(sapply (toCompare[(i+1):length(toCompare)],function(toCompare ,newPop) {identical(toCompare[,-c(3,4)],newPop)},newPop[[i]][,-c(3,4)] ))})
+  toMutate = which(toMutate)
+  toMutate = toMutate[toMutate>elitism]
 
-  for (i in (length(newPop)-1):1) {
-    for(j in (i+1):(length(newPop))){
-
-      if(identical(newPop[[i]][,-c(3,4)],newPop[[j]][,-c(3,4)])){
-        toMutate=c(toMutate,j)
-        break()
-      }
-
-    }
-
-  }
   return(toMutate)
 
 }
-
-
-
 
 
 

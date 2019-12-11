@@ -19,10 +19,13 @@
 #   )
 # }
 
-Plot <- function (y,yT,stalling,eval){
+
+Plot <- function (y,yT,stalling,eval,limit=Inf){
   y=y[seq(1,to=min(which( is.na(y))))-1]
   ydf = data.frame(cbind(y,yT,eval))
   colnames(ydf) = c("y","yT","eval")
+  if(any(ydf$y <=limit))
+    ydf <- ydf %>% filter(y<=limit)
   g = (ggplot(ydf, aes( x = eval)) +
          geom_line(mapping= aes(y= yT,colour="red"),show.legend=FALSE) +
          geom_point(mapping= aes(y= yT,colour="red"),show.legend=FALSE)+
@@ -82,6 +85,8 @@ PlotPopulation <- function(toCompare, generations,path,printIt,subpath="/opt-gen
     colnames(toCompareDF) = c("value", "variable")
     toCompareDF           = as.data.frame(toCompareDF)
     toCompareDF$variable  = as.factor(toCompareDF$variable)
+    toCompareDF %>% filter(variable==25) %>% select(value) %>% as.factor()
+    toCompareDF[,"variable"==25]
 
     g <- suppressWarnings( ggplot(toCompareDF,aes(x= value,fill=variable))  +geom_histogram()+facet_wrap(~variable, scales="free"))
 

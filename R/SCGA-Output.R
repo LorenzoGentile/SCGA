@@ -26,7 +26,6 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
   pb$tick()
 
   ####### plots
-
   if( (generations %% control$plotInterval == 0 || generations == 1) && any(c(control$plotSigma,control$plotEvolution,control$plotPopulation,control$plotFitness))){
     G1 =G2 =G3= NULL
 
@@ -55,11 +54,12 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
     if (control$plotPopulation ){
       ind                                         <- length(result$plots$population$generations) + 1
       result$plots$population$generations[[ind]]  <- generations
-      result$plots$population$plot[[ind]]         <- PlotPopulation(x,generations,path,printIt=control$printPlot)
+      result$plots$population$plot[[ind]]   <-   G3    <- PlotPopulation(x,generations,path,printIt=control$printPlot)
     }
 
     if (control$plotEvolution){
-      G1 <- Plot(result$ybesthistory, media, stalling,eval)
+
+      G1 <- Plot(result$ybesthistory, media, stalling,eval,control$plotEvolutionLimit)
     }
     if(control$plotFitness){
       ind                                        <- length(result$plots$sigma$generations)+1
@@ -85,9 +85,11 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
     else if(is.null(G1) & is.null(G2) & !is.null(G3) )
       print(G3)
   }
+
+
   if (control$printSigma) {
     cat("\n Sigma normalised")
-    print(t(t(sigma) / sigma0))
+    print(t(t(sigma) / sigma0)[,1:(ncol(sigma)-8)])
   }
 
   if(control$printXMin){
