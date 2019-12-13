@@ -288,7 +288,7 @@ muteAllDep <- function(row,x,feature,sigmas,createFun,...){
 getIndexMut <- function(x.,i,avoid){
 
   row1 <-x.[which(x.[,"feature"] == i),"id"]
-  row <- setdiff(row1,avoid)
+  row  <- setdiff(row1,avoid)
   if (bazar::is.empty(row))
     row <- row1
   if (length(row)>1)
@@ -305,12 +305,12 @@ updatesigmas <- function(sigmas,toUpdate,feature){
 
   types <- getValues(x=feature[toUpdate],name="type",Unique = FALSE)
 
-  icat  <- toUpdate[which(types=="categorical")]
-  ireal <- toUpdate[which(types=="numeric")]
-  iint  <- toUpdate[which(types=="integer")]
-  irep  <- toUpdate[which(types=="repeater")]
+  icat            <- toUpdate[which(types=="categorical")]
+  ireal           <- toUpdate[which(types=="numeric")]
+  iint            <- toUpdate[which(types=="integer")]
+  irep            <- toUpdate[which(types=="repeater")]
 
-  Nc    <- rnorm(1,0,1)
+  Nc              <- rnorm(1,0,1)
 
   if (!is.empty(ireal)){
     tauReal       <- sigmas["tau1"]

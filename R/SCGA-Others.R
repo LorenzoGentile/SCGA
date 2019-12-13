@@ -180,13 +180,7 @@ selectPoolRouletteWheel <- function(fitness, size = (floor(length(fitness) / 2) 
 
   newpool=matrix(ncol=2,nrow=size) #initiliaze the matrix
   choices <- 1:length(fitness)    #create the indexes
-  newpool[,1] <- # assign values to the first column. prob is the fitness
-    sample(
-      length(fitness),
-      size,
-      replace = TRUE,
-      prob = fitness
-    )
+  newpool[,1] <-sample(  length(fitness), size, replace = TRUE, prob = fitness) # assign values to the first column. prob is the fitness
   for (j  in 1:size) { #assign values to the second column.the value of the correspondent first column is excluded
     newpool[j,2] <-
       sample(
@@ -201,18 +195,12 @@ selectPoolRouletteWheel <- function(fitness, size = (floor(length(fitness) / 2) 
 }
 selectBest <- function(fitness, size = (floor(length(fitness) / 2) + 1),...) {
 
-  nbest=100
+  nbest=size
   newpool=matrix(ncol=2,nrow=size) #initiliaze the matrix
   choices <- 1:nbest    #create the indexes
   indexes <- order(fitness,decreasing=T)[choices]
   fitness <- fitness[indexes]
-  newpool[,1] <- # assign values to the first column. prob is the fitness
-    sample(
-      nbest,
-      size,
-      replace = TRUE,
-      prob = fitness
-    )
+  newpool[,1] <- sample( nbest, size, replace = TRUE, prob = fitness ) # assign values to the first column. prob is the fitness
   for (j  in 1:size) { #assign values to the second column.the value of the correspondent first column is excluded
     newpool[j,2] <-
       sample(

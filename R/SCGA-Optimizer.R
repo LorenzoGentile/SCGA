@@ -12,11 +12,21 @@ SCGA <-
     control = list(),
     ...) {
 
-    ########## Initialise control and others ######################################################################################
+##%######################################################%##
+#                                                          #
+####           Initialise control and others            ####
+#                                                          #
+##%######################################################%##
+
     initList <- Initialise(control,...)
     list2env(initList,envir = environment())
 
-    ########## Multipopulation ######################################################################################
+##%######################################################%##
+#                                                          #
+####                  Multipopulation                   ####
+#                                                          #
+##%######################################################%##
+
     if(control$multiPopulation){
       result <- Multipopulation(initList,...)
       return(result)
@@ -24,7 +34,12 @@ SCGA <-
     else
       rm(initList)
 
-    ########## Create first population and sigmas ######################################################################################
+##%######################################################%##
+#                                                          #
+####         Create first population and sigmas         ####
+#                                                          #
+##%######################################################%##
+
 
     ########## if exists exists a resume File load it and continue the optimisation from that
 
