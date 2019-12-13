@@ -148,7 +148,6 @@ SCGA <- function(control = list(),...) {
 
   #   ____________________________________________________________________________
   #   finalize output                                                         ####
-browser()
   result <- finaliseOutput(mget(ls(),envir = environment()))
 
   return(result)
