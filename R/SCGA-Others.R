@@ -15,7 +15,8 @@ analyseOperationPerformance <- function(operator,list,evaluateFun){
 
 }
 
-
+progressBarCreate <- function(control)
+  progress::progress_bar$new(total = control$maxEvaluations,format = "  optimising [:bar] :percent eta: :eta", clear = TRUE, width= 60)
 RestartFromBackup <- function(resumeFrom){             #Function still To be checked
   load(paste0(resumeFrom,".RData"))
   return(list(

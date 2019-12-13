@@ -38,6 +38,9 @@ Initialise <-
 
     #initializatio of hyperparatmeter for Optimization
     con <- list(
+      analysePerformance      = F,
+      backup                  = F,
+      backupInterval          = 30,
       budgetTot               = 1,
       cRef                    = 1e-4,
       constraint              = FALSE,
@@ -86,7 +89,6 @@ Initialise <-
       repairMutation          = NULL,
       resume                  = FALSE,
       resumeFrom              = NULL,
-      saveIter                = FALSE,
       saveSigma               = FALSE,
       saveX                   = FALSE,
       seed                    = sample(1e6, 1),
@@ -101,17 +103,17 @@ Initialise <-
       x                       = NULL
     )
 
-    con[names(control)] = control
-    con$repairCross     = control$repairCross
-    con$repairFun       = control$repairFun
-    con$repairMutation  = control$repairMutation
+    con[names(control)]  = control
+    con$repairCross      = control$repairCross
+    con$repairFun        = control$repairFun
+    con$repairMutation   = control$repairMutation
     control <- con
     rm ("con")
 if(is.null(control$tournamentSize))
   control$tournamentSize = control$size / 10
     if (is.null(control$elitism))
       control$elitism  <- floor(control$size * 0.075 + 1)
-    control$toEval     <- (control$elitism + 1): control$size
+    control$toEval     <- 1 : control$size
     control$sizeToEval <- length(control$toEval)
 
     if (!is.null(control$maxGenerations) & !is.null(control$maxEvaluations) ){
@@ -121,16 +123,16 @@ if(is.null(control$tournamentSize))
       # } else if(is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
       #   control$maxGenerations <- floor(control$maxEvaluations/(control$size-control$elitism))
     } else if ( is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
-      control$maxGenerations  <- 1 + (control$maxEvaluations - control$size) %/% length(control$toEval)
+      control$maxGenerations  <- 1 + (control$maxEvaluations - control$size) %/% length(control$toEval-control$elitism)
     } else if (is.null(control$maxGenerations) & is.null(control$maxEvaluations) )
       stop("Provide maxGenerations or maxEvaluations")
 
 
     if(is.null(control$maxStallGenerations))
-      control$maxStallGenerations       <- Inf
+      control$maxStallGenerations                  <- Inf
 
     if(is.null(control$localOptGenerations))
-      control$localOptGenerations      <-  Inf
+      control$localOptGenerations                  <-  Inf
 
     ########## multiPopulation  ###########################################################################################################
     if(control$multiPopulation){
@@ -185,8 +187,8 @@ if(is.null(control$tournamentSize))
 
 
 if(control$constraint){
-  control$fitnessFN <- constraintHandlerFitness
-  bestFeasible      <- list(y = Inf, x = NULL, constraint = NULL)
+  control$fitnessFN                    <- constraintHandlerFitness
+  bestFeasible                         <- list(y = Inf, x = NULL, constraint = NULL)
 }else
   bestFeasible = NULL
     set.seed(control$seed, kind = "Mersenne-Twister", normal.kind = "Inversion")                               # set.seed
@@ -194,38 +196,38 @@ if(control$constraint){
     if (is.null(feature))                                                                                      # Check feature
       stop("feature is not provided")                                                                          # Check feature
     else if (is.function(feature))                                                                             # Check feature
-      feature <- feature()
+      feature                          <- feature()
 
     if (control$parallel) {                                                                                    # Cluster Settings
       print("setting up the cluster ")                                                                         # Cluster Settings
-      cltype                           <- ifelse(.Platform$OS.type != "windows", "FORK", "PSOCK")              # Cluster Settings
-      cpus                             <- min(detectCores() - 1, control$cpus, na.rm = TRUE)                   # Cluster Settings
-      cl                               <- makeCluster(cpus, type = cltype)                                     # Cluster Settings
+      cltype  <- ifelse(.Platform$OS.type != "windows", "FORK", "PSOCK")              # Cluster Settings
+      cpus    <- min(detectCores() - 1, control$cpus, na.rm = TRUE)                   # Cluster Settings
+      cl      <- makeCluster(cpus, type = cltype)                                     # Cluster Settings
       # Cluster Settings
       clusterExport(cl, varlist = "Fun", envir = environment())                                                # Cluster Settings
       #clusterEvalQ(cl, "orbit2R")                                                                             # Cluster Settings
       clusterEvalQ(cl, "bazar")                                                                                # Cluster Settings
       print(paste0("loaded cluster: - ",cpus," - nodes"))                                                      # Cluster Settings
     } else                                                                                                     # Cluster Settings
-      cl     <-  NULL
+      cl      <-  NULL
 
 
 
     if (!is.null(control$dontChangeMut)){
       active  <- as.numeric(setdiff(getValues(x = feature, name = "label", Unique = F),control$dontChangeMut))      # Active feature
       feat    <- feature[active]                                                                                 # Feature of only Active
-    }else
-      feat  <- feature
+    } else
+      feat    <- feature
 
-    nVar    <-NULL
-    nVar[1]  <- sum(getValues(x=feat, name = "type", Unique = F) == "numeric")
-    nVar[2]  <- sum(getValues(x=feat, name = "type", Unique = F) == "integer")
-    nVar[3]  <- sum(getValues(x=feat, name = "type", Unique = F) == "categorical")
-    nVar[4]  <- sum(getValues(x=feat, name = "type", Unique = F) == "repeater")
+    nVar      <- NULL
+    nVar[1]   <- sum(getValues(x=feat, name = "type", Unique = F) == "numeric")
+    nVar[2]   <- sum(getValues(x=feat, name = "type", Unique = F) == "integer")
+    nVar[3]   <- sum(getValues(x=feat, name = "type", Unique = F) == "categorical")
+    nVar[4]   <- sum(getValues(x=feat, name = "type", Unique = F) == "repeater")
 
-    result   <- OptimizerClass(job=control$job,resumeFrom=control$resumeFrom,control)                     # create a result object of class result
+    result    <- OptimizerClass(job=control$job,resumeFrom=control$resumeFrom,control)                     # create a result object of class result
 
-
+conditions = list(mainLoop = c(budgetOver=FALSE,targetReached=FALSE),stalling=c(reinitialise=FALSE,localOptimisation=FALSE) )
 
 
 
@@ -263,34 +265,34 @@ if(control$constraint){
 
 
 
-
     mutRate  <- control$mutRate
 
     return(list(
-      APPLY        = APPLY,
-      best         = best,
-      bestFeasible = bestFeasible,
-      cl           = cl,
-      consBest     = consBest,
-      control      = control,
-      evaluateFun  = evaluateFun,
-      evaluations  = evaluations,
-      feat         = feat,
-      feature      = feature,
-      forceEvaluation=forceEvaluation,
-      generations  = generations,
-      LAPPLY       = LAPPLY,
-      media        = media,
-      mutRate      = mutRate,
-      nVar         = nVar,
-      result       = result,
-      SAPPLY       = SAPPLY,
-      stalling     = stalling,
-      stallinFlag  = stallinFlag,
-      stallRef     = stallRef,
-      ws           = ws,
-      wY           = wY,
-      wC           = wC
+      APPLY           = APPLY,
+      best            = best,
+      bestFeasible    = bestFeasible,
+      cl              = cl,
+      conditions      = conditions,
+      consBest        = consBest,
+      control         = control,
+      evaluateFun     = evaluateFun,
+      evaluations     = evaluations,
+      feat            = feat,
+      feature         = feature,
+      forceEvaluation = forceEvaluation,
+      generations     = generations,
+      LAPPLY          = LAPPLY,
+      media           = media,
+      mutRate         = mutRate,
+      nVar            = nVar,
+      result          = result,
+      SAPPLY          = SAPPLY,
+      stalling        = stalling,
+      stallinFlag     = stallinFlag,
+      stallRef        = stallRef,
+      ws              = ws,
+      wY              = wY,
+      wC              = wC
     )
     )
   }

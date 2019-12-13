@@ -35,15 +35,15 @@ Crossover <- function(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,
     ,recursive = F )
 
 
-#leave some untouched
+  #leave some untouched
   unthouched <-  sample(
     length(oldFitness),
     control$size - nrow(sigma) ,
     prob = oldFitness
   )
 
- sigma  <- rbind(sigma,oldSigma[unthouched,])
- newPop <- append(newPop,oldPop[unthouched])
+  sigma  <- rbind(sigma,oldSigma[unthouched,])
+  newPop <- append(newPop,oldPop[unthouched])
 
 
   ## Remove the possible exceeding candidates
@@ -76,10 +76,10 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
   repetition <- repetition[possible]
 
 
-    r          <- rle(sort(candidates[[1]][, "feature"]))
-    R          <- rle(sort(candidates[[2]][, "feature"]))
-    replicates <- ifelse(any(c(r$lengths,R$lengths)>1),T,F)
-    if (replicates) {
+  r          <- rle(sort(candidates[[1]][, "feature"]))
+  R          <- rle(sort(candidates[[2]][, "feature"]))
+  replicates <- ifelse(any(c(r$lengths,R$lengths)>1),T,F)
+  if (replicates) {
     repetition <-
       pmin(r[[1]][match(possible, r[[2]])], R[[1]][match(possible, R[[2]])])
   }
@@ -116,8 +116,8 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
   ########## Crossover operations
 
   for (i in featuretochange) {
-# if(i==45)
-#   browser()
+    # if(i==45)
+    #   browser()
     ########## Choose the index to swap of the first
 
     index  <- mapply(IndicesToSwap, x. = candidates,avoid = avoid, MoreArgs = list(i=i), SIMPLIFY=FALSE)
