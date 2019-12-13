@@ -290,6 +290,7 @@ conditions = list(mainLoop = c(budgetOver=FALSE,targetReached=FALSE),stalling=c(
       stalling        = stalling,
       stallinFlag     = stallinFlag,
       stallRef        = stallRef,
+      y               = NULL,
       ws              = ws,
       wY              = wY,
       wC              = wC

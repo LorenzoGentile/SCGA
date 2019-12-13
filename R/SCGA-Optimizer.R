@@ -85,7 +85,7 @@ SCGA <- function(control = list(),...) {
 
     tictoc::tic("\n Evaluation time elasped ")
 
-    evaluteList <- evaluatePopulation(control,evaluateFun,newPop)
+    evaluteList <- evaluatePopulation(control,evaluateFun,newPop,y)
     list2env(evaluteList,envir = environment())
     rm(evaluteList)
 

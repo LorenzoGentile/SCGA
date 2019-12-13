@@ -1,14 +1,13 @@
 Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nVar,sigma,sigma0,generation,oldPopulation){
-# browser()
+  # browser()
   allMutated <- MutPool <- which((sample( c(0, 1),   prob = c((1 - mutRate), mutRate),
                                           size = control$size-control$elitism,   replace = TRUE ) == 1)) + control$elitism
-toCompare= append(newPop,oldPopulation)
+  toCompare= append(newPop,oldPopulation)
   identicCandidates <- checkIdentical(newPop,toCompare,control$elitism)
   identicX          <-  firstidenticX <-  length(identicCandidates)
 
   attempts <- 1
-  while(identicX !=0 || attempts == 1 || attempts <= 20){
-print(attempts)
+  while((identicX !=0 && attempts < 20) || attempts == 1 ){
     identicCandidates <- checkIdentical(newPop,toCompare,control$elitism)
     identicX = length(identicCandidates)
 

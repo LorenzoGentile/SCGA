@@ -5,6 +5,7 @@ operators <-function(env,...){
   #   ____________________________________________________________________________
   #   elitism                                                                 ####
 
+
   elitismList     <- elitism(control,constraint,fitness,newPop,sigma,y,x)
   list2env(elitismList,envir = environment())
   rm(elitismList)
