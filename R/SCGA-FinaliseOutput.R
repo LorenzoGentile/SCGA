@@ -1,7 +1,6 @@
 finaliseOutput <- function(env){
   list2env(env,envir = environment())
 
-  result$evaluations         <- evaluations
   result$exitMessage         <- names(conditions$mainLoop[ conditions$mainLoop==T])
   result$control             <- control
   result$lastSigma           <- sigma

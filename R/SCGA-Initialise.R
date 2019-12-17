@@ -225,7 +225,7 @@ createControl <- function(control) {
     resume                  = FALSE,
     resumeFrom              = "unknownFunction",
     saveSigma               = FALSE,
-    saveX                   = FALSE,
+    saveAll                 = FALSE,
     seed                    = sample(1e6, 1),
     selection               = selectpoolTournament,
     size                    = 30,                       # Size of population

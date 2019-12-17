@@ -57,3 +57,8 @@
 # out <- SCGA(
 #   control=control, Lower=Lower,matlab=matlab
 # )
+
+
+# files <- dir(getwd())
+# files <- files[grep("SCGA",files)]
+# sapply(files,source)

@@ -75,11 +75,12 @@ updateOutput <- function(env){
   if(is.infinite( stalling ))
     result$stalling                     <-  stalling <- 0
 
-  if (control$saveX)
+  if (control$saveAll){
+    
     result$x[[generations]]             <- x
-
-  if (control$saveSigma)
+    result$y[[generations]]             <- y
     result$sigma[[generations]]         <- sigma
+  }
 
 
   evaluations                           <- evaluations + length(control$toEval)
