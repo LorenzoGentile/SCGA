@@ -3,18 +3,13 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
 
   cat("\014")
 
-  if(control$constraint){
-    # prettyNum(consBestRel/cRef,digits=4)
-    cat(
-      paste( "SCGA | iter = ", generations, " | Eval = ",evaluations," | Identical = " ,identicX," | Best = ", prettyNum(best,digits=4)," | ConstRatio = ", prettyNum(consBest/cRef,digits=4),
+  if(control$constraint)
+    cat( paste( "SCGA | iter = ", generations, " | Eval = ",evaluations," | Identical = " ,identicX," | Best = ", prettyNum(best,digits=4)," | ConstRatio = ", prettyNum(consBest/cRef,digits=4),
              " | BestRel = ", prettyNum(bestRel,digits=4)," | ConstRatioRel = ", consBestRel/cRef," | relaxedCref = ",prettyNum(constList$relaxedCRef/cRef,digits=4),
              " | Mean = ", prettyNum(mean(y, na.rm = TRUE),digits=4),
              " | Stalling = ", stalling, "| NAs = ", NAs,"\n"))
-
-  }else
-
-    cat(
-      paste( "SCGA | iter = ", generations, " | Eval = ",evaluations, " | Best = ", prettyNum(best,digits=4),
+  else
+    cat(paste( "SCGA | iter = ", generations, " | Eval = ",evaluations, " | Best = ", prettyNum(best,digits=4),
              " | Mean = ", prettyNum(mean(y, na.rm = TRUE),digits=4),
              " | Stalling = ", stalling, "| NAs = ", NAs,"\n"))
 
@@ -24,6 +19,18 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
   # TODO : ERROR THAT HAS TO BE FIXED
   pb$update(min(.99,evaluations/control$maxEvaluations))
   pb$tick()
+
+  ##  ............................................................................
+  ##  backup
+  if(control$backup){
+    if(generations%%control$backupInterval==0){
+      back                      <- result
+      back$summary              <- createSummary(control,result)
+      save("back",file=paste0(control$resumeFrom,".RData"))
+    }
+
+  }
+
 
   ####### plots
   if( (generations %% control$plotInterval == 0 || generations == 1) && any(c(control$plotSigma,control$plotEvolution,control$plotPopulation,control$plotFitness))){
@@ -63,7 +70,7 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
     }
     if(control$plotFitness){
       ind                                        <- length(result$plots$sigma$generations)+1
-      G2 <-  result$plots$fitness$plot[[ind]] <- plotFitness(y,constList,fitness)
+      G2 <-  result$plots$fitness$plot[[ind]]    <- plotFitness(y,constList,fitness)
     }
 
 

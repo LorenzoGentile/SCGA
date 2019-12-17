@@ -70,8 +70,6 @@ EvalCand2Operator<- function(newPop,control){
   return(list(ChangeCross=ChangeCross,ChangeMut=ChangeMut))
 }
 
-
-
 InitPopAndSigma <- function(control,feature,LAPPLY){
 
   if(is.null(control$newPop)){
@@ -239,7 +237,8 @@ OptimizerClass<- function(job=NULL,resumeFrom=NULL,control){
                  localOpt           = c(TRUE,rep(FALSE,control$maxGenerations-1)),
                  sigma              = rep(list(NA),control$maxGenerations),
                  x                  = rep(list(NA),control$maxGenerations),
-                 plots              =list(population= list(generations=NULL, plot=NULL),
+                 xbesthistory       = rep(list(NA),control$maxGenerations),
+                 plots              = list(population= list(generations=NULL, plot=NULL),
                                           sigma= list(generations=NULL, plot=NULL))
   )
   class(result) <- "SCGAClass"

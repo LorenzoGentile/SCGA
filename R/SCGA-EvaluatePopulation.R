@@ -1,5 +1,4 @@
 evaluatePopulation <- function(control,evaluateFun,newPop,y,...){
-
   cat("\n","To evaluate",length(control$toEval),"candidates","\n")
   if(is.null(y)) y <- constraint <- NULL
 

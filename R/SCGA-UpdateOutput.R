@@ -44,14 +44,15 @@ updateOutput <- function(env){
     } else
       result$stalling                   <-  stalling <- stalling + 1
 
-  }else{
-
+  } else {
 
     best                                  <- min(y)
 
     result$yForResults                    <- yForResults
 
     result$ybesthistory[generations]      <- best
+
+    result$xbesthistory[generations]      <- x[which.min(y)]
 
     control$tolerance                     <- .01*min(y)
 

@@ -13,7 +13,6 @@ Crossover <- function(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,
 
 
 
-
   ########## Crossover for the hyperparamters of the mutation
 
   t.sigma                                                <- t(apply(CrossPool, 1, CrossSigma, sigma, feature, fitness)) # store temporary the generated hp the number is equal to the number of couples
@@ -34,18 +33,14 @@ Crossover <- function(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,
            control=control,probability=control$probability )
     ,recursive = F )
 
-
+if(control$size - nrow(sigma) >0){
   #leave some untouched
-  unthouched <-  sample(
-    length(oldFitness),
-    control$size - nrow(sigma) ,
-    prob = oldFitness
-  )
+  unthouched <-  sample(length(oldFitness),size=control$size - nrow(sigma) ,prob = oldFitness)
 
   sigma  <- rbind(sigma,oldSigma[unthouched,])
   newPop <- append(newPop,oldPop[unthouched])
 
-
+}
   ## Remove the possible exceeding candidates
   sigma <- sigma[1:control$size, ]
   newPop[seq(control$size + 1, length.out =  (-control$size + length(newPop)))] = NULL
@@ -59,26 +54,26 @@ Crossover <- function(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,
 
 CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,budgetTot,control,...) {
   ########## Initialise ######################################################################################
-  toadd      <- add <- index <-  list()
+  toadd        <- add <- index <-  list()
 
-  candidates <- pop[indexs]
+  candidates   <- pop[indexs]
   avoid = list(NULL, NULL)
-  minLength  <- round(min(sapply(candidates,function(x) sum(x[,"feature"] %in% setdiff(x[,"feature"],control$dontChangeCross)))))
-  maxChanges <- round(minLength * control$percCross)
+  minLength    <- round(min(sapply(candidates,function(x) sum(x[,"feature"] %in% setdiff(x[,"feature"],control$dontChangeCross)))))
+  maxChanges   <- round(minLength * control$percCross)
 
   ########## select the possible feature to swap
-  possible   <- intersect(candidates[[1]][, "feature"], candidates[[2]][, "feature"])
-  possible   <- setdiff(possible, control$dontChangeCross)
-  repetition <- probability <- rep(1, times =  purrr::map(feature,"label") %>% as.numeric() %>% max()) #deafault
+  possible     <- intersect(candidates[[1]][, "feature"], candidates[[2]][, "feature"])
+  possible     <- setdiff(possible, control$dontChangeCross)
+  repetition   <- probability <- rep(1, times =  purrr::map(feature,"label") %>% as.numeric() %>% max()) #deafault
   # replicates <- any(sapply(condidates, function(cand) sapply(unique(x[]), function)))
 
-  probability <- probability[possible]
-  repetition <- repetition[possible]
+  probability  <- probability[possible]
+  repetition   <- repetition[possible]
 
 
-  r          <- rle(sort(candidates[[1]][, "feature"]))
-  R          <- rle(sort(candidates[[2]][, "feature"]))
-  replicates <- ifelse(any(c(r$lengths,R$lengths)>1),T,F)
+  r            <- rle(sort(candidates[[1]][, "feature"]))
+  R            <- rle(sort(candidates[[2]][, "feature"]))
+  replicates   <- ifelse(any(c(r$lengths,R$lengths)>1),T,F)
   if (replicates) {
     repetition <-
       pmin(r[[1]][match(possible, r[[2]])], R[[1]][match(possible, R[[2]])])

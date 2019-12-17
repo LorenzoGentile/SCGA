@@ -27,6 +27,7 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
     featuretochange <- rep(possible,exchanges)
 
 
+
   if(updateSigma){
     sigmas <- updatesigmas(sigmas,unique(featuretochange),feature)
   # sigmas<- pmin(sigmas*1.3,sigmasT)

@@ -30,7 +30,6 @@ SCGA <- function(control = list(),...) {
   #   ____________________________________________________________________________
   #    Create first population and sigmas                                     ####
 
-
   ########## if exists exists a resume File load it and continue the optimisation from that
 
   if( file.exists(paste0( control$resumeFrom,".RData" )) && control$resume){
@@ -39,21 +38,21 @@ SCGA <- function(control = list(),...) {
     list2env(backList,envir = environment())
     rm(backList)
 
-
-  } else {
     ########## else create the population and sigma
+  } else {
 
     initPopAndSigmaList <- suppressWarnings( InitPopAndSigma(control,feature,LAPPLY))
     list2env(initPopAndSigmaList,envir = environment())
     rm(initPopAndSigmaList)
 
-
   }
+
   ##%######################################################%##
   #                                                          #
   ####                Start the main loop                 ####
   #                                                          #
   ##%######################################################%##
+
 
   cat("\n Start optimization loop \n")
   pb <- progressBarCreate(control)
@@ -63,8 +62,9 @@ SCGA <- function(control = list(),...) {
     tictoc::tic("Optimisation loop time elasped")
     #TODO : add conditions to initialise
 
-    ### . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ..
-    ### stall and local optimisation conditions                                 ####
+
+    #   ____________________________________________________________________________
+    #   stall and local optimisation conditions                                 ####
 
     conditions$stalling["reinitialise"]      <- stalling == control$maxStallGenerations
     conditions$stalling["localOptimisation"] <- stalling > control$localOptGenerations
@@ -92,6 +92,7 @@ SCGA <- function(control = list(),...) {
 
     #   ____________________________________________________________________________
     #   fitness assignment                                                      ####
+
     fitnessList <- assignFitness(control,newPop,y)
     list2env(fitnessList,envir = environment())
     rm(fitnessList)
@@ -108,23 +109,14 @@ SCGA <- function(control = list(),...) {
     #   ____________________________________________________________________________
     #   Update output                                                           ####
 
-
     updateOutputList <-  updateOutput(mget(ls(),envir = environment()))
-
     list2env(updateOutputList,envir = environment())
     rm(updateOutputList)
-    ####### Backup
 
-    if(control$backup){
-      result$pop[[generations]] <- x
-      result$obs[[generations]] <- yForResults
-      back                      <- result
-      if(generations%%control$backupInterval==0)
-        save("back",file=paste0(resumeFrom,".RData"))
-    }
 
     ##  ............................................................................
     ##  print on screen
+
     if(control$printIter){
 
       result <- Output(best=best,bestRel=bestRel, control,consBest=consBest,
@@ -142,7 +134,7 @@ SCGA <- function(control = list(),...) {
     ##  update conditions                                                       ####
     generations    <- generations + 1
     conditions$mainLoop["budgetOver"]    <- evaluations > (control$maxEvaluations
-                                                            - control$size + control$elitism)
+                                                           - control$size + control$elitism)
     conditions$mainLoop["targetReached"] <- abs(control$target - best) < control$convergence
   }
 

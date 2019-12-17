@@ -20,10 +20,7 @@
 #'
 #'
 
-Initialise <-
-  function(
-    control = list(),
-    ...) {
+Initialise <- function(control = list(),...) {
 
     require(bazar)
     require(tictoc)
@@ -35,135 +32,7 @@ Initialise <-
     ########## Initialise Control ########################################################################################################################################################
 
     cat(paste0(" \n the seed is ",control$seed) )
-
-    #initializatio of hyperparatmeter for Optimization
-    con <- list(
-      analysePerformance      = F,
-      backup                  = F,
-      backupInterval          = 30,
-      budgetTot               = 1,
-      cRef                    = 1e-4,
-      constraint              = FALSE,
-      convergence             = 0.001,                    # diffenrence between target and current best
-      cpus                    = NA,
-      createCandFun           = createCandidate,          # function used to create the candidate
-      createMutFun            = NewValueMutation,     # function used in the mutation
-      crossFun                = CrossOperation,
-      dontChangeCross         = NULL,                     # feature that don' t have to be used in crossover and mutation
-      dontChangeMut           = NULL,                      # feature that don' t have to be used in crossover and mutation
-      elitism                 = NULL,
-      feature                 = NULL,
-      fitnessFN               = assignFitnessRank,        # Default evaluation function
-      Fun                     = NULL,
-      #maxStallGenerastions  = maxGenerations             # maximum number of iterations without improvement
-      job                     = NULL,
-      keep                    = NULL,                     # vector of fields that don't have to be touched
-      #localOptGenerations    = maxGenerations
-      maxEvaluations          = NULL,
-      maxGenerations          = NULL,
-      multiPopulation         = FALSE,
-      maxRelaxation           = 0    ,
-      # multiPopControl       = NULL,
-      mutRate                 = 0.8,                      # likelihood to perform mutation
-      mutationReport          = FALSE,
-      parallel                = FALSE,                     # parallelize the evaluation of the objective function
-      percCross               = 0.5  ,                     # ratio between the number of chromosome to corssover and the avarege length of the candidates
-      percMut                 = 0.3  ,                     # ratio between the number of chromosome to mutate length of the candidate
-      plotCross               = FALSE,
-      plotCrossR              = FALSE,
-      plotEvolution           = FALSE,                     # Print evolution of bests
-      plotEvolutionLimit      = Inf,
-      plotFitness             = FALSE,
-      plotPopulation          = FALSE,
-      plotSigma               = FALSE,                     # Print maximum values of sigmas
-      plotInterval            = 1,
-      popCreateFun            = createPopulation,         # function used to create the initial population
-      printIter               = TRUE,
-      printSigma              = FALSE,
-      printXMin               = FALSE,
-      printPlot               = FALSE,
-      probability             = NULL,
-      pureFeasibility         = 0   ,
-      repairCross             = NULL,
-      repairFun               = NULL,
-      repairMutation          = NULL,
-      resume                  = FALSE,
-      resumeFrom              = NULL,
-      saveSigma               = FALSE,
-      saveX                   = FALSE,
-      seed                    = sample(1e6, 1),
-      selection               = selectpoolTournament,
-      size                    = 30,                       # Size of population
-      target                  = -Inf,                     # best value achievable
-      # tournamentSize          = 6,
-      updateSigma             = FALSE,
-      useCrossover            = TRUE,
-      vectorOnly              = FALSE,                    # pass only the values to the obj
-      vectorized              = FALSE,                    # the obj accepts all the candidates togheter
-      x                       = NULL
-    )
-
-    con[names(control)]  = control
-    con$repairCross      = control$repairCross
-    con$repairFun        = control$repairFun
-    con$repairMutation   = control$repairMutation
-    control <- con
-    rm ("con")
-if(is.null(control$tournamentSize))
-  control$tournamentSize = control$size / 10
-    if (is.null(control$elitism))
-      control$elitism  <- floor(control$size * 0.075 + 1)
-    control$toEval     <- 1 : control$size
-    control$sizeToEval <- length(control$toEval)
-
-    if (!is.null(control$maxGenerations) & !is.null(control$maxEvaluations) ){
-      control$maxEvaluations <- min(control$maxEvaluations,control$size+(control$maxGenerations-1)*(control$size-control$elitism))
-      cat("\n Both maxGenerations and maxEvaluations provided.The minimum will be used \n")
-
-      # } else if(is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
-      #   control$maxGenerations <- floor(control$maxEvaluations/(control$size-control$elitism))
-    } else if ( is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
-      control$maxGenerations  <- 1 + (control$maxEvaluations - control$size) %/% length(control$toEval-control$elitism)
-    } else if (is.null(control$maxGenerations) & is.null(control$maxEvaluations) )
-      stop("Provide maxGenerations or maxEvaluations")
-
-
-    if(is.null(control$maxStallGenerations))
-      control$maxStallGenerations                  <- Inf
-
-    if(is.null(control$localOptGenerations))
-      control$localOptGenerations                  <-  Inf
-
-    ########## multiPopulation  ###########################################################################################################
-    if(control$multiPopulation){
-      if(is.null(control$multiPopControl))
-        control$multiPopControl                    <- list()
-
-      if(is.null(control$multiPopControl$migrationType))
-        control$multiPopControl$migrationType      <- "evaluation"
-
-      if(is.null(control$multiPopControl$multiPopStrategy))
-        control$multiPopControl$multiPopStrategy   <- populationStrategyParallel
-
-      if(is.null(control$multiPopControl$nMigrations))
-        control$multiPopControl$nMigrations        <- control$elitism
-
-      if(is.null(control$multiPopControl$nPopulations)){
-
-        if(!control$parallel){
-          control$multiPopControl$nPopulations      <- 2
-
-        }else if(control$parallel)
-          control$multiPopControl$nPopulations      <- control$cpus
-
-      }
-      if(is.null(control$multiPopControl$migrationInterval)){
-        if(control$multiPopControl$migrationType == "generation")
-          control$multiPopControl$migrationInterval <- control$maxGenerations %/% 10
-        else
-          control$multiPopControl$migrationInterval <- (control$maxEvaluations/control$multiPopControl$nPopulations) %/% 10
-      }
-    }
+    control <- createControl(control)
     ########## Initialise other #############################################################################################################
     constList                                   <- NULL
     constraint    <- constraintForResults       <- NULL
@@ -200,9 +69,9 @@ if(control$constraint){
 
     if (control$parallel) {                                                                                    # Cluster Settings
       print("setting up the cluster ")                                                                         # Cluster Settings
-      cltype  <- ifelse(.Platform$OS.type != "windows", "FORK", "PSOCK")              # Cluster Settings
-      cpus    <- min(detectCores() - 1, control$cpus, na.rm = TRUE)                   # Cluster Settings
-      cl      <- makeCluster(cpus, type = cltype)                                     # Cluster Settings
+      cltype  <- ifelse(.Platform$OS.type != "windows", "FORK", "PSOCK")                                       # Cluster Settings
+      cpus    <- min(detectCores() - 1, control$cpus, na.rm = TRUE)                                            # Cluster Settings
+      cl      <- makeCluster(cpus, type = cltype)                                                              # Cluster Settings
       # Cluster Settings
       clusterExport(cl, varlist = "Fun", envir = environment())                                                # Cluster Settings
       #clusterEvalQ(cl, "orbit2R")                                                                             # Cluster Settings
@@ -300,7 +169,138 @@ conditions = list(mainLoop = c(budgetOver=FALSE,targetReached=FALSE),stalling=c(
 
 
 
+createControl <- function(control) {
 
+  #initializatio of hyperparatmeter for Optimization
+  con <- list(
+    analysePerformance      = F,
+    backup                  = F,
+    backupInterval          = 30,
+    budgetTot               = 1,
+    cRef                    = 1e-4,
+    constraint              = FALSE,
+    convergence             = 0.001,                    # diffenrence between target and current best
+    cpus                    = NA,
+    createCandFun           = createCandidate,          # function used to create the candidate
+    createMutFun            = NewValueMutation,     # function used in the mutation
+    crossFun                = CrossOperation,
+    dontChangeCross         = NULL,                     # feature that don' t have to be used in crossover and mutation
+    dontChangeMut           = NULL,                      # feature that don' t have to be used in crossover and mutation
+    elitism                 = NULL,
+    feature                 = NULL,
+    fitnessFN               = assignFitnessRank,        # Default evaluation function
+    Fun                     = NULL,
+    #maxStallGenerastions  = maxGenerations             # maximum number of iterations without improvement
+    job                     = NULL,
+    keep                    = NULL,                     # vector of fields that don't have to be touched
+    #localOptGenerations    = maxGenerations
+    maxEvaluations          = NULL,
+    maxGenerations          = NULL,
+    multiPopulation         = FALSE,
+    maxRelaxation           = 0    ,
+    # multiPopControl       = NULL,
+    mutRate                 = 0.8,                      # likelihood to perform mutation
+    mutationReport          = FALSE,
+    parallel                = FALSE,                     # parallelize the evaluation of the objective function
+    percCross               = 0.5  ,                     # ratio between the number of chromosome to corssover and the avarege length of the candidates
+    percMut                 = 0.3  ,                     # ratio between the number of chromosome to mutate length of the candidate
+    plotCross               = FALSE,
+    plotCrossR              = FALSE,
+    plotEvolution           = FALSE,                     # Print evolution of bests
+    plotEvolutionLimit      = Inf,
+    plotFitness             = FALSE,
+    plotPopulation          = FALSE,
+    plotSigma               = FALSE,                     # Print maximum values of sigmas
+    plotInterval            = 1,
+    popCreateFun            = createPopulation,         # function used to create the initial population
+    printIter               = TRUE,
+    printSigma              = FALSE,
+    printXMin               = FALSE,
+    printPlot               = FALSE,
+    probability             = NULL,
+    pureFeasibility         = 0   ,
+    repairCross             = NULL,
+    repairFun               = NULL,
+    repairMutation          = NULL,
+    resume                  = FALSE,
+    resumeFrom              = "unknownFunction",
+    saveSigma               = FALSE,
+    saveX                   = FALSE,
+    seed                    = sample(1e6, 1),
+    selection               = selectpoolTournament,
+    size                    = 30,                       # Size of population
+    target                  = -Inf,                     # best value achievable
+    # tournamentSize          = 6,
+    updateSigma             = FALSE,
+    useCrossover            = TRUE,
+    vectorOnly              = FALSE,                    # pass only the values to the obj
+    vectorized              = FALSE,                    # the obj accepts all the candidates togheter
+    x                       = NULL
+  )
+  con[names(control)]  = control
+  con$repairCross      = control$repairCross
+  con$repairFun        = control$repairFun
+  con$repairMutation   = control$repairMutation
+  control              <- con
+  control$resumeFrom   <- paste(control$resumeFrom,Sys.time(),sep="-" )
+  rm ("con")
+  if(is.null(control$tournamentSize))
+    control$tournamentSize = max(2,control$size / 10)
+  if (is.null(control$elitism))
+    control$elitism  <- floor(control$size * 0.075 + 1)
+  control$toEval     <- 1 : control$size
+  control$sizeToEval <- length(control$toEval)
+
+  if (!is.null(control$maxGenerations) & !is.null(control$maxEvaluations) ){
+    control$maxEvaluations <- min(control$maxEvaluations,control$size+(control$maxGenerations-1)*(control$size-control$elitism))
+    cat("\n Both maxGenerations and maxEvaluations provided.The minimum will be used \n")
+
+    # } else if(is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
+    #   control$maxGenerations <- floor(control$maxEvaluations/(control$size-control$elitism))
+  } else if ( is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
+    control$maxGenerations  <- 1 + (control$maxEvaluations - control$size) %/% length(control$toEval-control$elitism)
+  } else if (is.null(control$maxGenerations) & is.null(control$maxEvaluations) )
+    stop("Provide maxGenerations or maxEvaluations")
+
+
+  if(is.null(control$maxStallGenerations))
+    control$maxStallGenerations                  <- Inf
+
+  if(is.null(control$localOptGenerations))
+    control$localOptGenerations                  <-  Inf
+
+  ########## multiPopulation  ###########################################################################################################
+  if(control$multiPopulation){
+    if(is.null(control$multiPopControl))
+      control$multiPopControl                    <- list()
+
+    if(is.null(control$multiPopControl$migrationType))
+      control$multiPopControl$migrationType      <- "evaluation"
+
+    if(is.null(control$multiPopControl$multiPopStrategy))
+      control$multiPopControl$multiPopStrategy   <- populationStrategyParallel
+
+    if(is.null(control$multiPopControl$nMigrations))
+      control$multiPopControl$nMigrations        <- control$elitism
+
+    if(is.null(control$multiPopControl$nPopulations)){
+
+      if(!control$parallel){
+        control$multiPopControl$nPopulations      <- 2
+
+      }else if(control$parallel)
+        control$multiPopControl$nPopulations      <- control$cpus
+
+    }
+    if(is.null(control$multiPopControl$migrationInterval)){
+      if(control$multiPopControl$migrationType == "generation")
+        control$multiPopControl$migrationInterval <- control$maxGenerations %/% 10
+      else
+        control$multiPopControl$migrationInterval <- (control$maxEvaluations/control$multiPopControl$nPopulations) %/% 10
+    }
+  }
+  return(control)
+}
 
 
 
