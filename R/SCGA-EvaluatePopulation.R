@@ -18,7 +18,7 @@ evaluatePopulation <- function(control,evaluateFun,newPop,y,...){
 
   yForResults        <- y
 
-  tictoc::toc()
+  # tictoc::toc()
 
   ########## Count the NAs
   NAs             <- sum(is.na(y))

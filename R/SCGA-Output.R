@@ -1,5 +1,5 @@
 Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,constList,evaluations,eval,fitness,generations,identicX,media, NAs, result, y,x,sigma,sigma0,stalling, pb,cRef=NULL){
-  tictoc::toc()
+  # tictoc::toc()
 
   cat("\014")
 

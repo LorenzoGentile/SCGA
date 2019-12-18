@@ -23,7 +23,7 @@
 Initialise <- function(control = list(),...) {
 
     require(bazar)
-    require(tictoc)
+    # require(tictoc)
     require(SPOT)
     require(purrr)
     require(ggplot2)

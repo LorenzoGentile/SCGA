@@ -59,7 +59,7 @@ SCGA <- function(control = list(),...) {
 
   while (all(!conditions$mainLoop)) {
 
-    tictoc::tic("Optimisation loop time elasped")
+    # tictoc::tic("Optimisation loop time elasped")
     #TODO : add conditions to initialise
 
 
@@ -83,7 +83,7 @@ SCGA <- function(control = list(),...) {
 
     x <- newPop # duplicate the population for convenience
 
-    tictoc::tic("\n Evaluation time elasped ")
+    # tictoc::tic("\n Evaluation time elasped ")
 
     evaluteList <- evaluatePopulation(control,evaluateFun,newPop,y)
     list2env(evaluteList,envir = environment())
