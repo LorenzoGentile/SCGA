@@ -85,18 +85,113 @@ PlotPopulation <- function(toCompare, generations,path,printIt,subpath="/opt-gen
     colnames(toCompareDF) = c("value", "variable")
     toCompareDF           = as.data.frame(toCompareDF)
     toCompareDF$variable  = as.factor(toCompareDF$variable)
-    toCompareDF %>% filter(variable==25) %>% select(value) %>% as.factor()
-    toCompareDF[,"variable"==25]
+    ranges  <- sapply(feature, function(x) return(c(max(x$bound()),min(x$bound()))),simplify = T)
+    toCompareDF$xmin=ranges[1,toCompareDF$variable]
+    toCompareDF$xmax=ranges[2,toCompareDF$variable]
 
-    g <- suppressWarnings( ggplot(toCompareDF,aes(x= value,fill=variable))  +geom_histogram()+facet_wrap(~variable, scales="free"))
+    g <- suppressWarnings( ggplot(toCompareDF,aes(x= value,fill=variable))  +geom_histogram()+facet_wrap(~variable, scales="free")+
+                             geom_blank(aes(x = xmin)) +
+                             geom_blank(aes(x = xmax))+
+                             theme_minimal()+
+                             theme(legend.position = 'none')#+
+                           # ggtitle("Best found solutions")
+                             )
 
     if(printIt)
-      ggsave(paste0(path,"/opt-gen-",generations,".png"), width = 40, height = 20, units = "cm",g)
+      ggsave(paste0(path,"/opt-gen-",generations,".pdf"), width = 40, height = 20, units = "cm",g)
   } else{
     subpath = paste0(subpath,"Pop-",1:length(toCompare),"-")
     g <- mapply(plotPopulation,toCompare=toCompare, subpath=subpath,MoreArgs = list(generations=generations,path=path,printIt=printIt),SIMPLIFY = FALSE)
   }
   return(g)
+}
+PlotPopulationBest <- function(toCompare, generations,path,printIt,subpath="/opt-gen-",toCompBest){
+  if(!is.list(toCompare[[1]])){
+    if(is.list(toCompare)){
+      toCompare <- sapply(toCompare, function(x){
+
+        out= rep(NA, length(feature))
+        out[x[,"feature"]]=x[,"value"]
+        out
+      }
+
+      )
+      toCompare = t(toCompare)
+    }
+    toCompareDF=NULL
+    for (i in 1:ncol(toCompare)) {
+      toCompareDF = rbind(toCompareDF,cbind(toCompare[,i],i))
+    }
+
+    colnames(toCompareDF) = c("value", "variable")
+    toCompareDF           = as.data.frame(toCompareDF)
+    toCompareDF$variable  = as.factor(toCompareDF$variable)
+    ranges  <- sapply(feature, function(x) return(c(max(x$bound()),min(x$bound()))),simplify = T)
+    toCompareDF$xmin=ranges[1,toCompareDF$variable]
+    toCompareDF$xmax=ranges[2,toCompareDF$variable]
+    g <- suppressWarnings( ggplot(toCompareDF,aes(x= value,fill=variable))  +geom_histogram()+facet_wrap(~variable, scales="free")+
+                             geom_vline(data=toCompBest,aes(xintercept=toCompBest$value), linetype="dashed", color = "black") +
+                             geom_blank(aes(x = xmin)) +
+                             geom_blank(aes(x = xmax))+
+                             theme_minimal()+
+                             theme(legend.position = 'none')+
+                              ggtitle("Best found solutions",subtitle = "Dotted black line indicates the optimum value")
+    )
+    if(printIt)
+      ggsave(paste0(path,"/opt-gen-",generations,".pdf"), width = 40, height = 20, units = "cm",g)
+  } else{
+    subpath = paste0(subpath,"Pop-",1:length(toCompare),"-")
+    g <- mapply(plotPopulation,toCompare=toCompare, subpath=subpath,MoreArgs = list(generations=generations,path=path,printIt=printIt),SIMPLIFY = FALSE)
+  }
+  return(g)
+}
+PlotXBest<- function(toCompare, generations="post",path,printIt,subpath="/opt-gen-",evaluations=NULL,evalBest){
+
+  if(!is.list(toCompare[[1]])){
+    if(is.list(toCompare)){
+    toCompare <- sapply(toCompare, function(x){
+
+      out= rep(NA, length(feature))
+      out[x[,"feature"]]=x[,"value"]
+      out
+    }
+
+    )
+    toCompare = t(toCompare)
+    }
+    if(is.null(evaluations))
+      evaluations=1:nrow(toCompare)
+    toCompareDF=NULL
+    for (i in 1:ncol(toCompare)) {
+      toCompareDF = rbind(toCompareDF,cbind(toCompare[,i],i,evaluations))
+    }
+
+    colnames(toCompareDF) = c("value", "variable","evaluations")
+    toCompareDF           = as.data.frame(toCompareDF)
+    toCompareDF$variable  = as.factor(toCompareDF$variable)
+    ranges  <- sapply(feature, function(x) return(c(max(x$bound()),min(x$bound()))),simplify = T)
+    toCompareDF$xmin=ranges[1,toCompareDF$variable]
+    toCompareDF$xmax=ranges[2,toCompareDF$variable]
+    toCompBest <- toCompareDF %>% filter(evaluations==evaluations[[evalBest]])
+    g <- suppressWarnings( ggplot(toCompareDF,aes(x= evaluations,y=value,color=variable))  +geom_point()+
+                             geom_hline(data=toCompBest,aes(yintercept=toCompBest$value), linetype="dashed", color = "black") +
+                             facet_wrap(~variable, scales="free_y")+
+
+                             geom_blank(aes(y = xmin)) +
+                             geom_blank(aes(y = xmax))+
+                             theme_minimal()+
+                             theme(legend.position = 'none', axis.text.x = element_text(angle = 30, hjust = 1)) +
+                            scale_x_continuous( labels = scales::scientific )+
+
+                            ggtitle("Best found solutions history",subtitle = "Dotted black line indicates the optimum value")
+    )
+    if(printIt)
+      ggsave(paste0(path,"/opt-gen-PopHistBest-",generations,".pdf"), width = 40, height = 20, units = "cm",g)
+  } else{
+    subpath = paste0(subpath,"PopHistBest-",1:length(toCompare),"-")
+    g <- mapply(plotPopulation,toCompare=toCompare, subpath=subpath,MoreArgs = list(generations=generations,path=path,printIt=printIt),SIMPLIFY = FALSE)
+  }
+  return(list(g,toCompBest))
 }
 plotFitness <- function(y,constList,fitness){
 

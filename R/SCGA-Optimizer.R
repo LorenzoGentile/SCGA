@@ -56,7 +56,6 @@ SCGA <- function(control = list(),...) {
 
   cat("\n Start optimization loop \n")
   pb <- progressBarCreate(control)
-
   while (all(!conditions$mainLoop)) {
 
     # tictoc::tic("Optimisation loop time elasped")
@@ -70,10 +69,10 @@ SCGA <- function(control = list(),...) {
     conditions$stalling["localOptimisation"] <- stalling > control$localOptGenerations
 
     if(any(conditions$stalling)){
+      conditionsList <- do.call(names(conditions$stalling[conditions$stalling==T]),
+                                args=list(mget(ls()),...))
 
-      conditionsList <- do.call(names(sconditions$stalling[conditions$stalling==T]),
-                                args=list(mget(ls())))
-      list2env(conditionsList)
+      list2env(conditionsList,envir = environment())
       rm(conditionsList)
 
     }
@@ -84,8 +83,7 @@ SCGA <- function(control = list(),...) {
     x <- newPop # duplicate the population for convenience
 
     # tictoc::tic("\n Evaluation time elasped ")
-
-    evaluteList <- evaluatePopulation(control,evaluateFun,newPop,y)
+    evaluteList <- evaluatePopulation(control,evaluateFun,newPop,y,...)
     list2env(evaluteList,envir = environment())
     rm(evaluteList)
 

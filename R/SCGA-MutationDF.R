@@ -104,6 +104,7 @@ MutateRealDF <- function(x,i,feature,row,sigmas,createFun,report,generation,...)
     mutationReport[nextReport,2] <- x[row,"value"]                                            #report
   }
 
+   # x[row,"value"]                <- Tlu(x[row,"value"] ,bounds[1],bounds[2])
   x[row,"value"]                <- min( bounds[2],x[row,"value"])
 
   x[row,"value"]                <- max( bounds[1],x[row,"value"])
@@ -269,8 +270,12 @@ muteAllDep <- function(row,x,feature,sigmas,createFun,...){
     i= x[row,"feature"]
 
     for (k in idDepExisting) {
-      if(! x[which(x[,"id"]==k),"feature"] %in% depExistingNoNeeded)
+
+      if(! x[which(x[,"id"]==k),"feature"] %in% depExistingNoNeeded){
+        # if(x[which(x[,"id"]==k),"feature"] %in% feature[[featOfRow]]$depToMutate())
         x <- mutateDepDF(x=x,i=as.numeric(x[which(x[,"id"]==k),"feature"]),feature=feature,row=which(x[,"id"]==k),sigmas,createFun,...)
+      }
+
       else
         x=x[-which(x[,"id"]==k),,drop=FALSE]
     }
@@ -392,3 +397,12 @@ NewValueMutation <-
     }
     return(y)
   }
+Tlu <- function(x,a,b){
+  y            <- (x-a) / (b-a)
+  ydash        <- y
+  inds         <- (floor(y) %% 2) == 0
+  ydash[inds]  <-  abs(y[inds]-floor(y[inds]))
+  ydash[!inds] <-  1 - abs(y[!inds]-floor(y[!inds]))
+  xdash        <- a + (b - a) * ydash
+  xdash
+}

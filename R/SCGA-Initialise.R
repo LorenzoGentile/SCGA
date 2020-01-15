@@ -194,6 +194,7 @@ createControl <- function(control) {
     job                     = NULL,
     keep                    = NULL,                     # vector of fields that don't have to be touched
     #localOptGenerations    = maxGenerations
+    localOptimiser          = localOptimisation,
     maxEvaluations          = NULL,
     maxGenerations          = NULL,
     multiPopulation         = FALSE,

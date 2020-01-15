@@ -20,6 +20,7 @@ createCandidate <- function(X,feature,...){
 
   for ( i in notdependent){
 
+
     x <- rbind(x,createDepDF(feature,i,id=max(0,nrow(x))+1,xDone=x,...))
   }
 
