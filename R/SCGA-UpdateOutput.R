@@ -1,4 +1,6 @@
 updateOutput <- function(env){
+
+
   list2env(env,envir = environment())
 
   result$NAs[generations]               <- NAs
@@ -52,7 +54,7 @@ updateOutput <- function(env){
 
     result$ybesthistory[generations]      <- best
 
-    result$xbesthistory[[generations]]      <- x[which.min(y)]
+    result$xbesthistory[[generations]]      <- x[[which.min(yForResults)]]
 
     control$tolerance                     <- .01*min(y)
 
@@ -78,7 +80,7 @@ updateOutput <- function(env){
   if (control$saveAll){
 
     result$x[[generations]]             <- x
-    result$y[[generations]]             <- y
+    result$y[[generations]]             <- yForResults
     result$sigma[[generations]]         <- sigma
   }
 

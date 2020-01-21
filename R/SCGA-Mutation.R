@@ -43,7 +43,7 @@ Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nV
         APPLY( X = matrix(MutPool, , 1), MARGIN = 1,  MutationDF, pop = newPop,
                feature = feature, maxMuting = ChangeMut, sigmas = sigma, createFun = control$createMutFun,
                dontChange = control$dontChangeMut, addnames = control$keep, repairMut = NULL,
-               updateSigma= control$updateSigma ,report=control$mutationReport,control=control,generation=generation)
+               updateSigma= control$updateSigma ,report=control$mutationReport,control=control,generation=generation,probability=control$probability)
 
       newPop[MutPool] <- purrr::map(MutResult,1)
 

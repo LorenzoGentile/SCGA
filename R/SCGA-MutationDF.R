@@ -1,6 +1,6 @@
 MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
                        dontChange=dontChange, replicates=F,repairMut=NULL,
-                       updateSigma,control,...) {
+                       updateSigma,control,probability,...) {
   index       <- X
   x           <- pop
   back        <- x <- x[[index]]
@@ -15,16 +15,33 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
 
   r <- rle(sort(x[,"feature"]))
   repetition <- r[[1]][match(possible,r[[2]])]
-
+  replicates   <- ifelse(any(r$lengths>1),T,F)
 
   maxMuting   <- round(toChange * control$percMut * rnorm(1,1,.2))
   exchanges   <- max(min(toChange,maxMuting),1)
 
-  if (length(possible) > 1)
-    featuretochange <- sample(possible,exchanges,prob = probability*repetition,replace = T)
 
-  else
-    featuretochange <- rep(possible,exchanges)
+
+  if (exchanges > 1) {
+
+    if (length(possible) > 1){
+      if(replicates)
+        featuretochange <- sample(possible, exchanges, prob = probability * repetition, replace = T)
+      else
+        featuretochange <- sample(possible, exchanges, prob = probability * repetition)
+    }
+
+
+    else
+      featuretochange <- rep(possible, exchanges)
+
+  } else if (exchanges == 1) {
+    featuretochange <- possible
+
+  } else {
+    featuretochange <- NULL
+
+  }
 
 
 

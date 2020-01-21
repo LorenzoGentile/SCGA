@@ -19,7 +19,9 @@ finaliseOutput <- function(env){
     result$xbest             <- result$xbesthistory[ind]
     result$ybest             <- result$ybesthistory[ind]
   }
-
+notNaInd = !is.na(result$ybesthistory)
+result$ybesthistory <- result$ybesthistory[notNaInd]
+result$xbesthistory <- result$xbesthistory[notNaInd]
 
   return(result)
 }
