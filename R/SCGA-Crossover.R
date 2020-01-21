@@ -26,7 +26,7 @@ Crossover <- function(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,
 
   ########## Crossover for candidates
 
-  newPop[seq( from = control$elitism + 1, by = 1, length.out = 2 * row.sigma )] <- unlist(    # I start replacing the candidates starting from control$elitism +1
+    newPop[seq( from = control$elitism + 1, by = 1, length.out = 2 * row.sigma )] <- unlist(    # I start replacing the candidates starting from control$elitism +1
     APPLY( X = CrossPool, MARGIN = 1, CrossOperation, pop = x, feature = feature,
            keep = control$keep,
            repairCross = control$repairFun, budgetTot = control$budgetTot,
@@ -52,7 +52,7 @@ if(control$size - nrow(sigma) >0){
   ))
 }
 
-CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,budgetTot,control,...) {
+CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,budgetTot,control,probability,...) {
   ########## Initialise ######################################################################################
   toadd        <- add <- index <-  list()
 
@@ -60,13 +60,13 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
   avoid = list(NULL, NULL)
   minLength    <- round(min(sapply(candidates,function(x) sum(x[,"feature"] %in% setdiff(x[,"feature"],control$dontChangeCross)))))
   maxChanges   <- round(minLength * control$percCross)
-
   ########## select the possible feature to swap
   possible     <- intersect(candidates[[1]][, "feature"], candidates[[2]][, "feature"])
   possible     <- setdiff(possible, control$dontChangeCross)
-  repetition   <- probability <- rep(1, times =  purrr::map(feature,"label") %>% as.numeric() %>% max()) #deafault
+  repetition   <- rep(1, times =  purrr::map(feature,"label") %>% as.numeric() %>% max()) #deafault
+  if(is.null(probability))
+  probability  <- repetition
   # replicates <- any(sapply(condidates, function(cand) sapply(unique(x[]), function)))
-
   probability  <- probability[possible]
   repetition   <- repetition[possible]
 

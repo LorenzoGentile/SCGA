@@ -203,8 +203,8 @@ createControl <- function(control) {
     mutRate                 = 0.8,                      # likelihood to perform mutation
     mutationReport          = FALSE,
     parallel                = FALSE,                     # parallelize the evaluation of the objective function
-    percCross               = 0.5  ,                     # ratio between the number of chromosome to corssover and the avarege length of the candidates
-    percMut                 = 0.3  ,                     # ratio between the number of chromosome to mutate length of the candidate
+    percCross               = 0.2  ,                     # ratio between the number of chromosome to corssover and the avarege length of the candidates
+    percMut                 = 0.2  ,                     # ratio between the number of chromosome to mutate length of the candidate
     plotCross               = FALSE,
     plotCrossR              = FALSE,
     plotEvolution           = FALSE,                     # Print evolution of bests
