@@ -80,7 +80,7 @@ updateOutput <- function(env){
   if (control$saveAll){
 
     result$x[[generations]]             <- x
-    result$y[[generations]]             <- y
+    result$y[[generations]]             <- yForResults
     result$sigma[[generations]]         <- sigma
   }
 
