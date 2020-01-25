@@ -22,150 +22,153 @@
 
 Initialise <- function(control = list(),...) {
 
-    require(bazar)
-    # require(tictoc)
-    require(SPOT)
-    require(purrr)
-    require(ggplot2)
-    require(parallel)
+  require(bazar)
+  # require(tictoc)
+  require(SPOT)
+  require(purrr)
+  require(ggplot2)
+  require(parallel)
 
-    ########## Initialise Control ########################################################################################################################################################
+  ########## Initialise Control ########################################################################################################################################################
 
-    cat(paste0(" \n the seed is ",control$seed) )
-    control <- createControl(control)
-    ########## Initialise other #############################################################################################################
-    constList                                   <- NULL
-    constraint    <- constraintForResults       <- NULL
-    feature                                     <- control$feature                                              # Initialise #
-    forceEvaluation                             <- FALSE
-    Fun                                         = control$Fun                                                   # Initialise #
-    stallinFlag                                 <- FALSE                                                        # Initialise #
-    media                                       <- NULL
-    stalling <-  ws <- evaluations              <- 0
-    generations                                 <- 1
-    best                                        <- Inf
-    consBest      <- consBestRel <- bestRel     <- NULL
-    wY                                          <- NULL
-    wC                                          <- NULL
-    stallRef                                    <- Inf
+  cat(paste0(" \n the seed is ",control$seed) )
+  control <- createControl(control)
+  ########## Initialise other #############################################################################################################
+  constList                                   <- NULL
+  constraint    <- constraintForResults       <- NULL
+  feature                                     <- control$feature                                              # Initialise #
+  forceEvaluation                             <- FALSE
+  Fun                                         = control$Fun                                                   # Initialise #
+  stallinFlag                                 <- FALSE                                                        # Initialise #
+  media                                       <- NULL
+  stalling <-  ws <- evaluations              <- 0
+  generations                                 <- 1
+  best                                        <- Inf
+  consBest      <- consBestRel <- bestRel     <- NULL
+  wY                                          <- NULL
+  wC                                          <- NULL
+  stallRef                                    <- Inf
+  resuming                                    <- FALSE
 
-    if (is.null(control$job)){
-      control$job=list()
-      control$job$algo.name="anonymousAlgo"
+  if (is.null(control$job)){
+    control$job=list()
+    control$job$algo.name="anonymousAlgo"
+  }
+
+
+  if(control$constraint){
+    control$fitnessFN                    <- constraintHandlerFitness
+    bestFeasible                         <- list(y = Inf, x = NULL, constraint = NULL)
+  }else
+    bestFeasible = NULL
+  set.seed(control$seed, kind = "Mersenne-Twister", normal.kind = "Inversion")                               # set.seed
+
+  if (is.null(feature))                                                                                      # Check feature
+    stop("feature is not provided")                                                                          # Check feature
+  else if (is.function(feature))                                                                             # Check feature
+    feature                          <- feature()
+
+  if (control$parallel) {                                                                                    # Cluster Settings
+    print("setting up the cluster ")                                                                         # Cluster Settings
+    cltype  <- ifelse(.Platform$OS.type != "windows", "FORK", "PSOCK")                                       # Cluster Settings
+    cpus    <- min(detectCores() - 1, control$cpus, na.rm = TRUE)                                            # Cluster Settings
+    cl      <- makeCluster(cpus, type = cltype)                                                              # Cluster Settings
+    # Cluster Settings
+    clusterExport(cl, varlist = "Fun", envir = environment())                                                # Cluster Settings
+    #clusterEvalQ(cl, "orbit2R")                                                                             # Cluster Settings
+    clusterEvalQ(cl, "bazar")                                                                                # Cluster Settings
+    print(paste0("loaded cluster: - ",cpus," - nodes"))                                                      # Cluster Settings
+  } else                                                                                                     # Cluster Settings
+    cl      <-  NULL
+
+
+
+  if (!is.null(control$dontChangeMut)){
+    active  <- as.numeric(setdiff(getValues(x = feature, name = "label", Unique = F),control$dontChangeMut))      # Active feature
+    feat    <- feature[active]                                                                                 # Feature of only Active
+  } else
+    feat    <- feature
+
+  nVar      <- NULL
+  nVar[1]   <- sum(getValues(x=feat, name = "type", Unique = F) == "numeric")
+  nVar[2]   <- sum(getValues(x=feat, name = "type", Unique = F) == "integer")
+  nVar[3]   <- sum(getValues(x=feat, name = "type", Unique = F) == "categorical")
+  nVar[4]   <- sum(getValues(x=feat, name = "type", Unique = F) == "repeater")
+
+  result    <- OptimizerClass(job=control$job,resumeFrom=control$resumeFrom,control)                     # create a result object of class result
+
+  conditions <-  initializeConditions()
+
+
+  if(is.null(cl)){
+    LAPPLY <- lapply
+    APPLY  <- apply
+    SAPPLY <- sapply
+  }
+  else{
+    LAPPLY <- function(...){
+      parLapply(cl,...)
+    }
+    APPLY  <- function(...){
+      parApply(cl,...)
     }
 
-
-if(control$constraint){
-  control$fitnessFN                    <- constraintHandlerFitness
-  bestFeasible                         <- list(y = Inf, x = NULL, constraint = NULL)
-}else
-  bestFeasible = NULL
-    set.seed(control$seed, kind = "Mersenne-Twister", normal.kind = "Inversion")                               # set.seed
-
-    if (is.null(feature))                                                                                      # Check feature
-      stop("feature is not provided")                                                                          # Check feature
-    else if (is.function(feature))                                                                             # Check feature
-      feature                          <- feature()
-
-    if (control$parallel) {                                                                                    # Cluster Settings
-      print("setting up the cluster ")                                                                         # Cluster Settings
-      cltype  <- ifelse(.Platform$OS.type != "windows", "FORK", "PSOCK")                                       # Cluster Settings
-      cpus    <- min(detectCores() - 1, control$cpus, na.rm = TRUE)                                            # Cluster Settings
-      cl      <- makeCluster(cpus, type = cltype)                                                              # Cluster Settings
-      # Cluster Settings
-      clusterExport(cl, varlist = "Fun", envir = environment())                                                # Cluster Settings
-      #clusterEvalQ(cl, "orbit2R")                                                                             # Cluster Settings
-      clusterEvalQ(cl, "bazar")                                                                                # Cluster Settings
-      print(paste0("loaded cluster: - ",cpus," - nodes"))                                                      # Cluster Settings
-    } else                                                                                                     # Cluster Settings
-      cl      <-  NULL
-
-
-
-    if (!is.null(control$dontChangeMut)){
-      active  <- as.numeric(setdiff(getValues(x = feature, name = "label", Unique = F),control$dontChangeMut))      # Active feature
-      feat    <- feature[active]                                                                                 # Feature of only Active
-    } else
-      feat    <- feature
-
-    nVar      <- NULL
-    nVar[1]   <- sum(getValues(x=feat, name = "type", Unique = F) == "numeric")
-    nVar[2]   <- sum(getValues(x=feat, name = "type", Unique = F) == "integer")
-    nVar[3]   <- sum(getValues(x=feat, name = "type", Unique = F) == "categorical")
-    nVar[4]   <- sum(getValues(x=feat, name = "type", Unique = F) == "repeater")
-
-    result    <- OptimizerClass(job=control$job,resumeFrom=control$resumeFrom,control)                     # create a result object of class result
-
-conditions = list(mainLoop = c(budgetOver=FALSE,targetReached=FALSE),stalling=c(reinitialise=FALSE,localOptimisation=FALSE) )
-
-
-
-    if(is.null(cl)){
-      LAPPLY <- lapply
-      APPLY  <- apply
-      SAPPLY <- sapply
+    SAPPLY <- function(...){
+      parSapply(cl,...)
     }
-    else{
-      LAPPLY <- function(...){
-        parLapply(cl,...)
-      }
-      APPLY  <- function(...){
-        parApply(cl,...)
-      }
-
-      SAPPLY <- function(...){
-        parSapply(cl,...)
-      }
-    }
+  }
 
   ####### Ridefine objective function  ########
 
-      if(control$vectorized && control$vectorOnly )
-        evaluateFun <- function(x,...) Fun(x[1:length(x)][,"value"],...)
+  if(control$vectorized && control$vectorOnly )
+    evaluateFun <- function(x,...) Fun(x[1:length(x)][,"value"],...)
 
-      else if (control$vectorized && !control$vectorOnly )
-        evaluateFun <- function(x,...) Fun(x,...)
+  else if (control$vectorized && !control$vectorOnly )
+    evaluateFun <- function(x,...) Fun(x,...)
 
-      else if (!control$vectorized && !control$vectorOnly )
-        evaluateFun <- function(x,...) SAPPLY( X = x,Fun,...)
+  else if (!control$vectorized && !control$vectorOnly )
+    evaluateFun <- function(x,...) SAPPLY( X = x,Fun,...)
 
-      else if (!control$vectorized && control$vectorOnly )
-        evaluateFun <- function(x,...)  SAPPLY( X = x, function (x) Fun(x[,"value"]),...)
+  else if (!control$vectorized && control$vectorOnly )
+    evaluateFun <- function(x,...)  SAPPLY( X = x, function (x) Fun(x[,"value"]),...)
 
 
 
-    mutRate  <- control$mutRate
+  mutRate  <- control$mutRate
 
-    return(list(
-      APPLY           = APPLY,
-      best            = best,
-      bestFeasible    = bestFeasible,
-      cl              = cl,
-      conditions      = conditions,
-      consBest        = consBest,
-      control         = control,
-      evaluateFun     = evaluateFun,
-      evaluations     = evaluations,
-      feat            = feat,
-      feature         = feature,
-      forceEvaluation = forceEvaluation,
-      generations     = generations,
-      LAPPLY          = LAPPLY,
-      media           = media,
-      mutRate         = mutRate,
-      nVar            = nVar,
-      result          = result,
-      SAPPLY          = SAPPLY,
-      stalling        = stalling,
-      stallinFlag     = stallinFlag,
-      stallRef        = stallRef,
-      y               = NULL,
-      ws              = ws,
-      wY              = wY,
-      wC              = wC
-    )
-    )
-  }
+  return(list(
+    APPLY           = APPLY,
+    best            = best,
+    bestFeasible    = bestFeasible,
+    cl              = cl,
+    conditions      = conditions,
+    consBest        = consBest,
+    constraint      = NULL,
+    control         = control,
+    evaluateFun     = evaluateFun,
+    evaluations     = evaluations,
+    feat            = feat,
+    feature         = feature,
+    forceEvaluation = forceEvaluation,
+    generations     = generations,
+    LAPPLY          = LAPPLY,
+    media           = media,
+    mutRate         = mutRate,
+    NAs             = 0,
+    nVar            = nVar,
+    result          = result,
+    resuming        = resuming,
+    SAPPLY          = SAPPLY,
+    stalling        = stalling,
+    stallinFlag     = stallinFlag,
+    stallRef        = stallRef,
+    y               = NULL,
+    ws              = ws,
+    wY              = wY,
+    wC              = wC
+  )
+  )
+}
 
 
 
@@ -243,7 +246,8 @@ createControl <- function(control) {
   con$repairFun        = control$repairFun
   con$repairMutation   = control$repairMutation
   control              <- con
-  control$resumeFrom   <- paste(control$resumeFrom,Sys.time(),sep="-" )
+  if(is.null(control$resumeFrom))
+    control$resumeFrom   <- paste(control$resumeFrom,Sys.time(),sep="-" )
   rm ("con")
   if(is.null(control$tournamentSize))
     control$tournamentSize = max(2,control$size / 10)
@@ -305,6 +309,7 @@ createControl <- function(control) {
 
 
 
+initializeConditions <- function()list(mainLoop = c(budgetOver=FALSE,targetReached=FALSE),stalling=c(reinitialise=FALSE,localOptimisation=FALSE) )
 
 
 

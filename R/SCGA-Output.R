@@ -26,6 +26,10 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
     if(generations%%control$backupInterval==0){
       back                      <- result
       back$summary              <- createSummary(control,result)
+      back$y=back$y[1:generations]
+      back$ybesthistory=back$ybesthistory[1:generations]
+      back$xbesthistory=back$xbesthistory[1:generations]
+      back$x=back$x[1:generations]
       save("back",file=paste0(control$resumeFrom,".RData"))
     }
 

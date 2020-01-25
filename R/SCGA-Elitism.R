@@ -1,4 +1,4 @@
-elitism <- function(control,constraints,fitness,newPop,sigma,y,x){
+elitism <- function(control,constraint=NULL,fitness,newPop,sigma,y,x){
 
   if (as.logical(control$elitism)) {
 

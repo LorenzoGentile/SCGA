@@ -54,7 +54,7 @@ updateOutput <- function(env){
 
     result$ybesthistory[generations]      <- best
 
-    result$xbesthistory[[generations]]      <- x[[which.min(yForResults)]]
+    result$xbesthistory[[generations]]    <- x[[which.min(yForResults)]]
 
     control$tolerance                     <- .01*min(y)
 

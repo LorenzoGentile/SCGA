@@ -17,28 +17,34 @@ analyseOperationPerformance <- function(operator,list,evaluateFun){
 
 progressBarCreate <- function(control)
   progress::progress_bar$new(total = control$maxEvaluations,format = "  optimising [:bar] :percent eta: :eta", clear = TRUE, width= 60)
-RestartFromBackup <- function(resumeFrom){             #Function still To be checked
-  load(paste0(resumeFrom,".RData"))
-  return(list(
-    result         = back,
-    fromResuming   = length(result$ybesthistory),
-    newPop         = result$pop[[fromResuming]],
-    generations    = fromResuming,
-    yForResults    = result$yForResults,
-    y              = result$obs[[fromResuming]],
-    ybesthistory   = result$ybesthistory,
-    NAs            = result$NAs ,
-    sigma          = result$sigma ,
-    best           = min(yForResults, na.rm = TRUE),
-    stalling       = result$stalling,
-    result         = result,
-    control        = control
-  )
-  )
+RestartFromBackup <- function(resumeFrom,newPop){             #Function still To be checked
+  load(paste0(resumeFrom,".RData" ))
+  result                   <- back
+  rm(back)
+  evaluations              <- result[["evaluations"]][(max(which(!is.na(result[["evaluations"]]))))-1]
+  ybesthistory             <- result[["ybesthistory"]]
+  xbesthistory             <- result[["xbesthistory"]]
+  yForResults              <- result[["yForResults"]]
+  y                        <- result[["y"]]
+  x                        <- result[["x"]]
+  plots                    <- result[["plots"]]
+  set.seed(result$control$seed)
+  resuming                 <-  T
+  if(result$control$saveAll){
+  y                        <-  y[[max(which(!is.na(ybesthistory)))]]
+  newPop                   <-  x[[max(which(!is.na(xbesthistory)))]]
+  } else
+    newPop[[1]]            <-  xbesthistory[[max(which(!is.na(xbesthistory)))]]
+
+  generations              <-  length(ybesthistory[!is.na(ybesthistory)])
+  # sigma0                 <- sigma[[1]]
+  env                      <- mget(ls(), envir = environment())
+
+  return(env)
+
 }
 
 EvalCand2Operator<- function(newPop,control){
-  browser()
   if (is.null(control$dontChangeCross)) {
 
     avglength     <- (length(unlist(newPop)) / ncol(newPop[[1]])) / control$size

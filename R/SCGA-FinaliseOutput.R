@@ -30,7 +30,7 @@ createSummary <- function (control,result){
 
   suppressWarnings(summary <- data.frame(yBest      = result$ybesthistory[!is.na(result$ybesthistory)],
                                            evaluations= result$evaluations[!is.na(result$ybesthistory)],
-                                           NAs        = result$NAs[!is.na(result$ybesthistory)],
+                                           NAs        = result$NAs[which(!is.na(result$ybesthistory))],
                                            seed       = control$seed))
   if(control$constraint)
     summary                <- cbind(summary,

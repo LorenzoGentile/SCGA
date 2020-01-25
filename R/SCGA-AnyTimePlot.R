@@ -1,5 +1,5 @@
 anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,
-                    useMinMax = T, confidenceInterval = c(0.75,0.2),plotDF=NULL,funSample=F,excludeValueHigher=Inf)
+                    useMinMax = T, confidenceInterval = c(0.75,0.2),plotDF=NULL,funSample=F,excludeValueHigher=Inf, themePosX =.8,themePosY =.9,errorBar=F )
 {
   retPlotDf=F
   if(is.null(plotDF)){
@@ -32,9 +32,19 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,
   }
   if (is.null(confidenceInterval))
   h <- ggplot(plotDF, aes(x = iteration,y = mean, color = algoName))
-  else
-  h <- ggplot(plotDF, aes(x = iteration,y = mean, color = algoName)) +  geom_ribbon(aes(ymin = min, ymax = max,
-                                                                                        fill = algoName),linetype=2, alpha = 0.2, show.legend = T)
+  else{
+    if(!errorBar)
+     h <- ggplot(plotDF, aes(x = iteration,y = mean, color = algoName)) +  geom_ribbon(aes(ymin = min, ymax = max,
+                                                                                          fill = algoName),linetype=2, alpha = 0.1, show.legend = T)
+  else{
+    iterSamp <- seq( min(plotDF$iteration),max(plotDF$iteration),length.out = 10)
+    iterSamp <- sapply(iterSamp, function(i) plotDF$iteration[which.min((plotDF$iteration-i)^2)])
+    redu <- plotDF %>% filter(iteration %in% iterSamp)
+     h <- ggplot(plotDF, aes(x = iteration,y = mean, color = algoName)) +
+       geom_errorbar(redu,mapping=aes(ymin=min, ymax=max), width=.2,
+                     position=position_dodge(width = 1000))
+  }
+  }
 
   h <- h + geom_line()
   if (ylog) {
@@ -45,15 +55,17 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,
   }
   h <- h + coord_cartesian(ylim = yLim, xlim = xLim)
   h <- h + scale_colour_manual(name = "Algorithm:",
-                               values = c("blue"     ,   "#33a02c"   ,  "red3"     ,   "gray1" ,     "magenta2" ,   "gold"   ,
-                                          "darkorange4" ,"darkorange1", "cadetblue2" , "plum1"    ,   "seagreen1"  , "darkorchid3" ,"yellow4","green","red"))
+                               values = c("#0000FF" ,"#228B22", "#FF0000" ,"#000000", "#BF3EFF" ,"#FF8C00" ,"#00EEEE" ,"#FF1493" ,"#8B4500" ,"#00EE00" ,"#1C86EE", "#C1CDCD", "#EEC900",
+                                          "#CD3700" ,"#FFBBFF" ,"#0000FF" ,"#228B22" ,"#FF0000",
+                                        "#000000" ,"#BF3EFF" ,"#FF8C00", "#00EEEE" ,"#FF1493", "#8B4500", "#00EE00" ,"#1C86EE" ,"#C1CDCD" ,"#EEC900" ,"#CD3700", "#FFBBFF"))
 
   h <- h + scale_fill_manual(name = "Algorithm:",
-                             values = c("blue"     ,   "#33a02c"   ,  "red3"     ,   "gray1" ,     "magenta2" ,   "gold"   ,
-                                        "darkorange4" ,"darkorange1", "cadetblue2" , "plum1"    ,   "seagreen1"  , "darkorchid3" ,"yellow4","green","red"))
+                             values = c("#0000FF" ,"#228B22", "#FF0000" ,"#000000", "#BF3EFF" ,"#FF8C00" ,"#00EEEE" ,"#FF1493" ,"#8B4500" ,"#00EE00" ,"#1C86EE", "#C1CDCD", "#EEC900",
+                                        "#CD3700" ,"#FFBBFF" ,"#0000FF" ,"#228B22" ,"#FF0000",
+                                        "#000000" ,"#BF3EFF" ,"#FF8C00", "#00EEEE" ,"#FF1493", "#8B4500", "#00EE00" ,"#1C86EE" ,"#C1CDCD" ,"#EEC900" ,"#CD3700", "#FFBBFF"))
 
-  h <- h+ theme_minimal()+xlab("Evaluations")+ylab("Objective function")+ggtitle("Anytime Performance plot")+theme(text = element_text(size=20),
-                                                                                                                   legend.position = c(0.7, 0.7)
+  h <- h+ theme_minimal()+xlab("Evaluations")+ylab("Objective function")+ggtitle("Best found solution history ")+theme(text = element_text(size=20),
+                                                                                                                   legend.position = c(themePosX, themePosY)
   )
   if(retPlotDf)
     return(list( h,plotDF))

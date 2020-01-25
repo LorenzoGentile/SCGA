@@ -190,7 +190,7 @@ else
 
   return(g)
 }
-PlotXBest<- function(toCompare, generations="post",path,printIt,subpath="/opt-gen-",evaluations=NULL,evalBest){
+PlotXBest<- function(toCompare, generations="post",path,printIt,subpath="/opt-gen-",evaluations=NULL,evalBest,types=NULL){
 
   if(!is.list(toCompare[[1]])){
     if(is.list(toCompare)){
@@ -213,11 +213,15 @@ PlotXBest<- function(toCompare, generations="post",path,printIt,subpath="/opt-ge
 
     colnames(toCompareDF) = c("value", "variable","evaluations")
     toCompareDF           = as.data.frame(toCompareDF)
+    if(!is.null(types))
+      toCompareDF$types      = types[toCompareDF$variable %>% as.numeric] %>% as.factor()
     toCompareDF$variable  = as.factor(toCompareDF$variable)
     ranges  <- sapply(feature, function(x) return(c(max(x$bound()),min(x$bound()))),simplify = T)
     toCompareDF$xmin=ranges[1,toCompareDF$variable]
     toCompareDF$xmax=ranges[2,toCompareDF$variable]
     toCompBest <- toCompareDF %>% filter(evaluations==evaluations[[evalBest]])
+
+    if(is.null(types))
     g <- suppressWarnings( ggplot(toCompareDF,aes(x= evaluations,y=value,color=variable))  +geom_point()+
                              geom_hline(data=toCompBest,aes(yintercept=toCompBest$value), linetype="dashed", color = "black") +
                              facet_wrap(~variable, scales="free_y",ncol=5)+
@@ -230,6 +234,19 @@ PlotXBest<- function(toCompare, generations="post",path,printIt,subpath="/opt-ge
 
                             ggtitle("Best found solutions history",subtitle = "Dotted black line indicates the optimum value")
     )
+    else
+      g <- suppressWarnings( ggplot(toCompareDF,aes(x= evaluations,y=value,color=types))  +geom_point()+
+                               geom_hline(data=toCompBest,aes(yintercept=toCompBest$value), linetype="dashed", color = "black") +
+                               facet_wrap(~variable, scales="free_y",ncol=5)+
+
+                               geom_blank(aes(y = xmin)) +
+                               geom_blank(aes(y = xmax))+
+                               theme_minimal()+
+                               theme(legend.position = "none", axis.text.x = element_text(angle = 30, hjust = 1)) +
+                               scale_x_continuous( labels = scales::scientific )+
+
+                               ggtitle("Best found solutions history",subtitle = "Dotted black line indicates the optimum value")
+      )
     if(printIt)
       ggsave(paste0(path,"/opt-gen-PopHistBest-",generations,".pdf"), width = 40, height = 20, units = "cm",g)
   } else{
@@ -246,3 +263,6 @@ plotFitness <- function(y,constList,fitness){
   g <- (ggplot(df,mapping=aes(x=fitness))+geom_point(aes(y=y,colour=feas,shape=as.factor(1),size=1.8))+scale_y_log10())+theme_minimal() + theme(legend.position="top") +guides(shape = FALSE, size = FALSE)
   return(g)
 }
+
+
+figSave <-  function(g,file=Sys.time()) ggsave(paste0(file,".pdf"), width = 10.521, height = 7.443, units = "in",g)

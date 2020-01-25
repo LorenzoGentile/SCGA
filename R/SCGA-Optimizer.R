@@ -11,7 +11,6 @@ SCGA <- function(control = list(),...) {
 
   #   ____________________________________________________________________________
   #     Initialise control and others                                         ####
-
   initList <- Initialise(control,...)
   list2env(initList,envir = environment())
 
@@ -30,22 +29,22 @@ SCGA <- function(control = list(),...) {
   #   ____________________________________________________________________________
   #    Create first population and sigmas                                     ####
 
+  ########## create the population and sigma
+
+  initPopAndSigmaList <- suppressWarnings( InitPopAndSigma(control,feature,LAPPLY))
+  list2env(initPopAndSigmaList,envir = environment())
+  rm(initPopAndSigmaList)
+
   ########## if exists exists a resume File load it and continue the optimisation from that
 
   if( file.exists(paste0( control$resumeFrom,".RData" )) && control$resume){
 
-    backList <- RestartFromBackup(control$resumeFrom)
+    backList <- RestartFromBackup(control$resumeFrom,newPop)
     list2env(backList,envir = environment())
     rm(backList)
-
-    ########## else create the population and sigma
-  } else {
-
-    initPopAndSigmaList <- suppressWarnings( InitPopAndSigma(control,feature,LAPPLY))
-    list2env(initPopAndSigmaList,envir = environment())
-    rm(initPopAndSigmaList)
-
   }
+
+
 
   ##%######################################################%##
   #                                                          #
@@ -81,11 +80,13 @@ SCGA <- function(control = list(),...) {
     #   Evaluation                                                              ####
 
     x <- newPop # duplicate the population for convenience
-
-    # tictoc::tic("\n Evaluation time elasped ")
-    evaluteList <- evaluatePopulation(control,evaluateFun,newPop,y,...)
-    list2env(evaluteList,envir = environment())
-    rm(evaluteList)
+    if (!resuming){
+      # tictoc::tic("\n Evaluation time elasped ")
+      evaluteList <- evaluatePopulation(control,evaluateFun,newPop,y,...)
+      list2env(evaluteList,envir = environment())
+      rm(evaluteList)
+    } else
+      resuming <- FALSE
 
 
     #   ____________________________________________________________________________
@@ -98,7 +99,7 @@ SCGA <- function(control = list(),...) {
 
     #   ____________________________________________________________________________
     #   new population generation                                               ####
-
+    browser()
     operatorApplicationList <- operators(mget(ls(),envir = environment()))
     list2env(operatorApplicationList,envir = environment())
     rm(operatorApplicationList)
@@ -106,7 +107,6 @@ SCGA <- function(control = list(),...) {
 
     #   ____________________________________________________________________________
     #   Update output                                                           ####
-
     updateOutputList <-  updateOutput(mget(ls(),envir = environment()))
     list2env(updateOutputList,envir = environment())
     rm(updateOutputList)
