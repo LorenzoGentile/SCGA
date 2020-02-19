@@ -1,6 +1,5 @@
 
 createPopulation <- function(feature,size,createCandidate=createCandidate,cl=NULL,...){
-
 if(is.null(cl))
   pop <- lapply(X=floor(runif(size,min=0,max=1e6)), FUN=createCandidate,feature=feature,newCand=TRUE,...)
 else

@@ -52,7 +52,6 @@ SCGA <- function(control = list(),...) {
   #                                                          #
   ##%######################################################%##
 
-
   cat("\n Start optimization loop \n")
   pb <- progressBarCreate(control)
   while (all(!conditions$mainLoop)) {
@@ -99,7 +98,6 @@ SCGA <- function(control = list(),...) {
 
     #   ____________________________________________________________________________
     #   new population generation                                               ####
-    browser()
     operatorApplicationList <- operators(mget(ls(),envir = environment()))
     list2env(operatorApplicationList,envir = environment())
     rm(operatorApplicationList)

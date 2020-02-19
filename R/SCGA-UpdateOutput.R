@@ -84,7 +84,6 @@ updateOutput <- function(env){
     result$sigma[[generations]]         <- sigma
   }
 
-
   evaluations                           <- evaluations + length(control$toEval)
 
   control$toEval                        <- seq(control$elitism+1, control$size)

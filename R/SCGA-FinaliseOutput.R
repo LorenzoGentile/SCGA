@@ -16,7 +16,7 @@ finaliseOutput <- function(env){
     result$consBest          <- consBest
   }  else {
     ind                      <- which.min(result$ybesthistory)
-    result$xbest             <- result$xbesthistory[ind]
+    result$xbest             <- result$xbesthistory[[ind]]
     result$ybest             <- result$ybesthistory[ind]
   }
 notNaInd = !is.na(result$ybesthistory)
