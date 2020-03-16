@@ -15,11 +15,14 @@ CreateFeature <- function( bounds,dependence=NULL, label=NULL,types=NULL,others 
 
   if(is.null(dependence))
     dependence <- rep(NA, length(bounds))
-
   if(is.null(others))
     others <- rep(list(NULL), length(bounds))
 
-  else if(length(others)!=length(bounds))
+  if(length(others)==length(bounds)){
+    feature <- try( mapply(CreateFeat, bounds,dependence,label, types, others,SIMPLIFY = FALSE),silent=T)
+    if(is.character(feature))
+      others <-  TreatOthers(others,length(bounds))
+  } else
     others <-  TreatOthers(others,length(bounds))
 
   feature <- mapply(CreateFeat, bounds,dependence,label, types, others,SIMPLIFY = FALSE)
@@ -39,7 +42,6 @@ TreatBounds <- function(lower,upper,types){
 }
 TreatOthers <- function(others,dim){
 
-  if(dim !=length(others)){
     dimsOfObjects <- sapply(others, length)
     if(all(dimsOfObjects==dim)){
       name = names(others)
@@ -55,12 +57,10 @@ TreatOthers <- function(others,dim){
     }else
       stop("ERROR: wrong in dimensions of others")
 
-  } else
-    stop("ERROR: wrong in dimensions of others")
+
 }
 
 CreateFeat<- function(bounds,dependence,label,types, others){
-
   feature <- list(
     bound                 = CreateBoundsInt(bounds),
     dependent             = CreateDependent(dependence),

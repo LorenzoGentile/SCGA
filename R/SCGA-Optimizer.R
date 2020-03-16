@@ -31,7 +31,7 @@ SCGA <- function(control = list(),...) {
 
   ########## create the population and sigma
 
-  initPopAndSigmaList <- suppressWarnings( InitPopAndSigma(control,feature,LAPPLY))
+  initPopAndSigmaList <- suppressWarnings( InitPopAndSigma(control,feature,LAPPLY,...))
   list2env(initPopAndSigmaList,envir = environment())
   rm(initPopAndSigmaList)
 
@@ -131,7 +131,7 @@ SCGA <- function(control = list(),...) {
     generations    <- generations + 1
     conditions$mainLoop["budgetOver"]    <- evaluations > (control$maxEvaluations
                                                            - control$size + control$elitism)
-    conditions$mainLoop["targetReached"] <- abs(control$target - best) < control$convergence
+    conditions$mainLoop["targetReached"] <- abs(best - control$target) <= control$convergence
   }
 
   #   ____________________________________________________________________________

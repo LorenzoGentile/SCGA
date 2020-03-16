@@ -16,5 +16,8 @@ Imports:
     parallel,
     SPOT,
     purrr,
-    ggplot2
+    ggplot2,
+    dplyr,
+    bazar,
+    plotly
 RoxygenNote: 6.1.1

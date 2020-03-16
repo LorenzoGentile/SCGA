@@ -21,6 +21,7 @@
 
 
 Plot <- function (y,yT,stalling,eval,limit=Inf){
+
   y=y[seq(1,to=min(which( is.na(y))))-1]
   ydf = data.frame(cbind(y,yT,eval))
   colnames(ydf) = c("y","yT","eval")

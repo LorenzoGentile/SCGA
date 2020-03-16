@@ -4,7 +4,7 @@ Crossover <- function(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,
   oldFitness <- fitness
   oldSigma   <- sigma
   control$crossProbability <- .8
-
+  avoid      <- list(NULL,NULL)
 
   poolSize   <- ceiling((   control$size - control$elitism ) / 2 * control$crossProbability)
 
@@ -26,21 +26,21 @@ Crossover <- function(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,
 
   ########## Crossover for candidates
 
-    newPop[seq( from = control$elitism + 1, by = 1, length.out = 2 * row.sigma )] <- unlist(    # I start replacing the candidates starting from control$elitism +1
+  newPop[seq( from = control$elitism + 1, by = 1, length.out = 2 * row.sigma )] <- unlist(    # I start replacing the candidates starting from control$elitism +1
     APPLY( X = CrossPool, MARGIN = 1, CrossOperation, pop = x, feature = feature,
            keep = control$keep,
            repairCross = control$repairFun, budgetTot = control$budgetTot,
            control=control,probability=control$probability )
     ,recursive = F )
 
-if(control$size - nrow(sigma) >0){
-  #leave some untouched
-  unthouched <-  sample(length(oldFitness),size=control$size - nrow(sigma) ,prob = oldFitness)
+  if(control$size - nrow(sigma) >0){
+    #leave some untouched
+    unthouched <-  sample(length(oldFitness),size=control$size - nrow(sigma) ,prob = oldFitness)
 
-  sigma  <- rbind(sigma,oldSigma[unthouched,])
-  newPop <- append(newPop,oldPop[unthouched])
+    sigma  <- rbind(sigma,oldSigma[unthouched,])
+    newPop <- append(newPop,oldPop[unthouched])
 
-}
+  }
   ## Remove the possible exceeding candidates
   sigma <- sigma[1:control$size, ]
   newPop[seq(control$size + 1, length.out =  (-control$size + length(newPop)))] = NULL
@@ -55,25 +55,25 @@ if(control$size - nrow(sigma) >0){
 CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,budgetTot,control,probability,...) {
   ########## Initialise ######################################################################################
   toadd        <- add <- index <-  list()
-
   candidates   <- pop[indexs]
-  avoid = list(NULL, NULL)
+  avoid        <- list(NULL, NULL)
   minLength    <- round(min(sapply(candidates,function(x) sum(x[,"feature"] %in% setdiff(x[,"feature"],control$dontChangeCross)))))
   maxChanges   <- round(minLength * control$percCross)
   ########## select the possible feature to swap
   possible     <- intersect(candidates[[1]][, "feature"], candidates[[2]][, "feature"])
   possible     <- setdiff(possible, control$dontChangeCross)
   repetition   <- rep(1, times =  purrr::map(feature,"label") %>% as.numeric() %>% max()) #deafault
-  if(is.null(probability))
-  probability  <- repetition
+
+  if(is.null(probability)) probability  <- repetition
+
   # replicates <- any(sapply(condidates, function(cand) sapply(unique(x[]), function)))
   probability  <- probability[possible]
   repetition   <- repetition[possible]
 
-
   r            <- rle(sort(candidates[[1]][, "feature"]))
   R            <- rle(sort(candidates[[2]][, "feature"]))
   replicates   <- ifelse(any(c(r$lengths,R$lengths)>1),T,F)
+
   if (replicates) {
     repetition <-
       pmin(r[[1]][match(possible, r[[2]])], R[[1]][match(possible, R[[2]])])
@@ -84,36 +84,44 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
 
 
   ########## select the feature to swap
-  if (exchanges > 1) {
+  # if (exchanges > 1) {
+  #
+  #   if (length(possible) > 1){
+  #     if(replicates)
+  #       featuretochange <- sample(possible, exchanges, prob = probability * repetition, replace = T)
+  #     else
+  #       featuretochange <- sample(possible, exchanges, prob = probability * repetition)
+  #   } else
+  #     featuretochange <- rep(possible, exchanges)
+  #
+  # } else if (exchanges == 1) {
+  #   featuretochange <- possible
+  #
+  # } else {
+  #   featuretochange <- NULL
+  #
+  # }
 
-    if (length(possible) > 1){
-      if(replicates)
-        featuretochange <- sample(possible, exchanges, prob = probability * repetition, replace = T)
-      else
-        featuretochange <- sample(possible, exchanges, prob = probability * repetition)
-    }
 
-
+  getFeatureToSwap <- function(){
+    if (possible %>% length() > 1)
+      featuretochange <- sample(possible, 1, prob = probability * repetition)
+    else if (possible %>% length() == 1)
+      featuretochange <- possible
     else
-      featuretochange <- rep(possible, exchanges)
-
-  } else if (exchanges == 1) {
-    featuretochange <- possible
-
-  } else {
-    featuretochange <- NULL
-
+      featuretochange <- NULL
+    return(featuretochange)
   }
 
 
-  featuretochange <- sort(featuretochange)
 
   ########## Crossover operations
 
-  for (i in featuretochange) {
+  while ((avoid %>% unlist() %>% length()) < exchanges) {
     # if(i==45)
     #   browser()
     ########## Choose the index to swap of the first
+    i <- getFeatureToSwap()
 
     index  <- mapply(IndicesToSwap, x. = candidates,avoid = avoid, MoreArgs = list(i=i), SIMPLIFY=FALSE)
 
@@ -125,13 +133,13 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
       matrix(sapply( X = 1:2,  FUN = getIndexPrec, x = candidates, index = index,  keep = keep),,2 )
 
     # all the indexes involved in the exchange
-    toadd <-lapply(  1:2,  FUN = function(i, x, index) {which(x[[i]][, "id"] %in% index[[i]])},  x = candidates,  index)
+    toadd <- lapply( 1:2,  FUN = function(i, x, index) {which(x[[i]][, "id"] %in% index[[i]])},  x = candidates,  index)
 
     # matrixes to append
-    add <-lapply(1:2, function(i, x, toadd) {  x[[i]][toadd[[i]], ]}, x = candidates, toadd = toadd)
+    add <- lapply( 1:2, function(i, x, toadd) {  x[[i]][toadd[[i]], ]}, x = candidates, toadd = toadd)
 
     # modify the field prec ,id in order to have consisency.keep field are also modified in order to inherit from parent
-    add <-lapply(  1:2,  modIdPrec,  id.prec = id.prec,  candidates = candidates,  toadd = toadd,  keep = keep)
+    add <- lapply( 1:2,  modIdPrec,  id.prec = id.prec,  candidates = candidates,  toadd = toadd,  keep = keep)
 
     # replace or  remove and add the new values
     candidates <- lapply( 1:2, finalCand, toadd = toadd, candidates = candidates, add = add )
@@ -145,6 +153,7 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
   }
 
   candidates <- lapply(candidates, newId)
+
   return(candidates)
 }
 

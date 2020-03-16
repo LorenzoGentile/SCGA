@@ -76,13 +76,13 @@ EvalCand2Operator<- function(newPop,control){
   return(list(ChangeCross=ChangeCross,ChangeMut=ChangeMut))
 }
 
-InitPopAndSigma <- function(control,feature,LAPPLY){
+InitPopAndSigma <- function(control,feature,LAPPLY,...){
 
   if(is.null(control$newPop)){
 
     ########## Create population
     suppressWarnings( newPop <- control$popCreateFun(feature,size = control$size,
-                                                     control$createCandFun,addnames = control$keep)
+                                                     control$createCandFun,addnames = control$keep,...)
     )
 
     ########## Repair
