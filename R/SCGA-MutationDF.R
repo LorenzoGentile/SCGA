@@ -5,7 +5,7 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
   x           <- pop
   back        <- x <- x[[index]]
   sigmas      <- sigmas[index,]
-  avoid<- NULL
+  avoid <- featChanged <- NULL
 
   toChange <- sum(x[,"feature"] %in% setdiff(x[,"feature"],dontChange))
 
@@ -20,38 +20,18 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
   maxMuting   <- round(toChange * control$percMut * rnorm(1,1,.2))
   exchanges   <- max(min(toChange,maxMuting),1)
 
-
-
-  if (exchanges > 1) {
-
-    if (length(possible) > 1){
-      if(replicates)
-        featuretochange <- sample(possible, exchanges, prob = probability * repetition, replace = T)
-      else
-        featuretochange <- sample(possible, exchanges, prob = probability * repetition)
-    }
-
-
+  getFeatureToSwap <- function(){
+    if (possible %>% length() > 1)
+      featuretochange <- sample(possible, 1, prob = probability * repetition)
+    else if (possible %>% length() == 1)
+      featuretochange <- possible
     else
-      featuretochange <- rep(possible, exchanges)
-
-  } else if (exchanges == 1) {
-    featuretochange <- possible
-
-  } else {
-    featuretochange <- NULL
-
+      featuretochange <- NULL
+    return(featuretochange)
   }
+  while ((avoid %>% length()) < exchanges){
 
-
-
-  if(updateSigma){
-    sigmas <- updatesigmas(sigmas,unique(featuretochange),feature)
-  # sigmas<- pmin(sigmas*1.3,sigmasT)
-  }
-
-  for (i in featuretochange) {
-
+    featChanged[(length(featChanged)+1)] <- i <- getFeatureToSwap()
     rows <- getIndexMut(x,i,avoid)
     row <- which(x[,"id"]==rows)
 
@@ -73,7 +53,10 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
   if(!is.null(repairMut))
     x <- repairMut(x,feature)
 
-
+  if(updateSigma){
+    sigmas <- updatesigmas(sigmas,unique(featChanged),feature)
+    # sigmas<- pmin(sigmas*1.3,sigmasT)
+  }
   # if(nrow(x)==nrow(back))
   #   print(cbind(back[,1],back[,1]==x[,1],x))
 
@@ -121,7 +104,7 @@ MutateRealDF <- function(x,i,feature,row,sigmas,createFun,report,generation,...)
     mutationReport[nextReport,2] <- x[row,"value"]                                            #report
   }
 
-   # x[row,"value"]                <- Tlu(x[row,"value"] ,bounds[1],bounds[2])
+  # x[row,"value"]                <- Tlu(x[row,"value"] ,bounds[1],bounds[2])
   x[row,"value"]                <- min( bounds[2],x[row,"value"])
 
   x[row,"value"]                <- max( bounds[1],x[row,"value"])
@@ -299,12 +282,12 @@ muteAllDep <- function(row,x,feature,sigmas,createFun,...){
 
     for (k in depNotExisting){
 
-        newRow <- createFun(feature,k,id = max(x[, "id"]) + 1,prec = x[row, "id"],x=x,...)
+      newRow <- createFun(feature,k,id = max(x[, "id"]) + 1,prec = x[row, "id"],x=x,...)
 
-        x <- rbind(x,newRow)
-      }
-
+      x <- rbind(x,newRow)
     }
+
+  }
   return(x)
 }
 

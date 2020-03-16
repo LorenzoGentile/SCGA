@@ -1,4 +1,4 @@
-fast20ResDF <- function(resultList,invsign=FALSE){
+out2DataFrame <- function(resultList,invsign=FALSE){
   getData <- function(e){
     algoName <- e$job$algo.name
     problemName <- e$job$prob.name
