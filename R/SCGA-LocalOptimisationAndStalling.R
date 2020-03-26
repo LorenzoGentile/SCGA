@@ -27,7 +27,7 @@ localOptimisation <- function(env,...){
 
 
 
-  initPopAndSigmaList          <- reinitialise(control)
+  initPopAndSigmaList          <- reinitialise(control,feature,LAPPLY)
   list2env(initPopAndSigmaList,envir=environment())
   rm(initPopAndSigmaList)
 
@@ -37,7 +37,7 @@ localOptimisation <- function(env,...){
 
 
 
-reinitialise <- function(control){
+reinitialise <- function(control,feature,LAPPLY){
   initPopAndSigmaList              <- suppressWarnings( InitPopAndSigma(control=control,feature,LAPPLY))
   initPopAndSigmaList$stallingFlag <- TRUE
   initPopAndSigmaList$stalling     <- 0

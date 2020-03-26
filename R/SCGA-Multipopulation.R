@@ -17,7 +17,8 @@
 
 
     ####### Update output #################################################################################################
-    evaluations           <- evaluations + sum( purrr::map(out,"evaluations") %>% as.integer() )
+
+    evaluations           <- evaluations + sum( sapply(out, function(x)x$evaluations %>% max) %>% as.integer() )
 
     #result$NAs[generations]           <- sum( purrr::map(out,"NAs") %>%unlist() )
     result$NAs[generations] =0         #################### to change##########################
@@ -26,7 +27,7 @@
     result$ybesthistory[generations]  <- best
     result$stalling       <- stalling <- generations - which.min(result$ybesthistory)
 
-    if (control$saveX)
+    if (control$saveAll)
       result$x[[generations]]         <- purrr::map(out,"x")
     if (control$saveSigma)
       result$sigma[[generations]]     <- purrr::map(out,"sigma")
@@ -34,7 +35,7 @@
 
     ####### Backup
 
-    if(control$saveIter){
+    if(control$backup){
       result$pop[[generations]] <- result$x[[generations]]
       result$obs[[generations]] <- result$yForResults
       back                      <- result

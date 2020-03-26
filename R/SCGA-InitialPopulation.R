@@ -26,58 +26,59 @@ createCandidate <- function(X,feature,...){
 
 }
 
- createDepDF <- function(feature, i, id, prec = NA, x = NULL, xDone=NULL, addnames = NULL, newCand=FALSE,...) {
+ createDepDF <- function(feature, i, id, prec = NA, x = NULL, xDone=NULL, addnames = NULL, newCand=FALSE,value=NULL,...) {
 
-  names = c("value", "feature", "prec", "id", addnames)
-  x = matrix(c(NA, i, prec, id, rep(NA, length(names) - 4)), 1, length(names))
-  colnames(x) <- names
+   names = c("value", "feature", "prec", "id", addnames)
+   x = matrix(c(NA, i, prec, id, rep(NA, length(names) - 4)), 1, length(names))
+   colnames(x) <- names
 
+   for (k in addnames) {
 
-  for (k in addnames) {
+     if (!is.null(feature[[i]][[k]])){
+       addfeat <- ifelse(is.function(feature[[i]][[k]]),feature[[i]][[k]](i=i, x=rbind(xDone,x), id=id),feature[[i]][[k]])
+       x[,k] <- addfeat
+     }
+     else
+       x[,k] <- NA
+   }
 
-    if (!is.null(feature[[i]][[k]])){
-      addfeat <- ifelse(is.function(feature[[i]][[k]]),feature[[i]][[k]](i=i, x=rbind(xDone,x), id=id),feature[[i]][[k]])
-      x[,k] <- addfeat
-    }
-    else
-      x[,k] <- NA
-  }
+   bounds <- feature[[i]]$bound(x=rbind(xDone,x), id=id,newCand=newCand)
 
-  bounds <- feature[[i]]$bound(x=rbind(xDone,x), id=id,newCand=newCand)
+   if( !is.null(value))
+     x[, "value"] = value
+   else if (feature[[i]]$type == "numeric") {
+     x[, "value"] = runif(1, bounds[1], bounds[2])
 
-  if (feature[[i]]$type == "numeric") {
-    x[, "value"] = runif(1, bounds[1], bounds[2])
+   }  else if (feature[[i]]$type == "categorical") {
+     if(length(bounds)>1)
 
-  }  else if (feature[[i]]$type == "categorical") {
-    if(length(bounds)>1)
+       x[, "value"] = sample(bounds,1)
+     else
+       x[, "value"] = bounds
+   } else if (feature[[i]]$type %in% c("repeater", "integer")) {
+     x[, "value"] = floor(runif(
+       1,
+       bounds[1],
+       bounds[2] + 1 - .Machine$double.eps
+     ))
+   }
 
-      x[, "value"] = sample(bounds,1)
-    else
-      x[, "value"] = bounds
-  } else if (feature[[i]]$type %in% c("repeater", "integer")) {
-    x[, "value"] = floor(runif(
-      1,
-      bounds[1],
-      bounds[2] + 1 - .Machine$double.eps
-    ))
-  }
+   dependent <- feature[[i]]$dependent(x=x,id=id,value =x[which(x[, "id"]==id), "value"] )
 
-  dependent <- feature[[i]]$dependent(x=x,id=id,value =x[which(x[, "id"]==id), "value"] )
+   if (!anyNA(dependent)) {
 
-  if (!anyNA(dependent)) {
+     dependence= ifelse(feature[[i]]$type == "repeater", x[1, "value"],1)
 
-    dependence= ifelse(feature[[i]]$type == "repeater", x[1, "value"],1)
+     for (k in numeric(dependence)){
 
-    for (k in numeric(dependence)){
+       for (j in dependent) {
 
-      for (j in dependent) {
+         x <-  rbind(x,createDepDF(  feature = feature,  i = j,  id = id + 1,
+                                     prec = x[1, "id"],  xDone=rbind(xDone,x),  addnames=addnames,newCand = TRUE))
+         id = max(0, x[, "id"])
 
-        x <-  rbind(x,createDepDF(  feature = feature,  i = j,  id = id + 1,
-                                prec = x[1, "id"],  xDone=rbind(xDone,x),  addnames=addnames,newCand = TRUE))
-        id = max(0, x[, "id"])
-
-      }
-    }
-  }
-  return(x)
-}
+       }
+     }
+   }
+   return(x)
+ }

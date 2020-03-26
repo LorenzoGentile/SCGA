@@ -62,11 +62,11 @@ SCGA <- function(control = list(),...) {
 
     #   ____________________________________________________________________________
     #   stall and local optimisation conditions                                 ####
-
     conditions$stalling["reinitialise"]      <- stalling == control$maxStallGenerations
     conditions$stalling["localOptimisation"] <- stalling > control$localOptGenerations
 
     if(any(conditions$stalling)){
+
       conditionsList <- do.call(names(conditions$stalling[conditions$stalling==T]),
                                 args=list(mget(ls()),...))
 
@@ -131,6 +131,8 @@ SCGA <- function(control = list(),...) {
     generations    <- generations + 1
     conditions$mainLoop["budgetOver"]    <- evaluations > (control$maxEvaluations
                                                            - control$size + control$elitism)
+    # if(best==0)
+    #   browser()
     conditions$mainLoop["targetReached"] <- abs(best - control$target) <= control$convergence
   }
 

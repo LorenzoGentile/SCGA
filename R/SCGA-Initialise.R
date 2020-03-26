@@ -197,7 +197,7 @@ createControl <- function(control) {
     job                     = NULL,
     keep                    = NULL,                     # vector of fields that don't have to be touched
     #localOptGenerations    = maxGenerations
-    localOptimiser          = localOptimisation,
+    localOptimiser          = LocalOptimisation,
     maxEvaluations          = NULL,
     maxGenerations          = NULL,
     multiPopulation         = FALSE,
@@ -216,7 +216,7 @@ createControl <- function(control) {
     plotPopulation          = FALSE,
     plotSigma               = FALSE,                     # Print maximum values of sigmas
     plotInterval            = 1,
-    popCreateFun            = createPopulation,         # function used to create the initial population
+    popCreateFun            = createPopulationLHD,       # function used to create the initial population
     printIter               = TRUE,
     printSigma              = FALSE,
     printXMin               = FALSE,

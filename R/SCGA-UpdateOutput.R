@@ -56,7 +56,7 @@ updateOutput <- function(env){
 
     result$xbesthistory[[generations]]    <- x[[which.min(yForResults)]]
 
-    control$tolerance                     <- .01*min(y)
+    control$tolerance                     <- abs(.01*min(y))
 
 
     lastLocal                           <- max(which(result$localOpt==TRUE))
