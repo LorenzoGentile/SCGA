@@ -43,8 +43,11 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
 
 
     if(any(is.na(x[,"value"]))){
-      print("ERROR in Mutation: NA created")
-      break
+      print("x.copy")
+      print(x.copy)
+      print("x")
+      print(x)
+      stop("ERROR in Mutation: NA created")
     }
 
     avoid <- c(avoid,CrossDF(x,rows))

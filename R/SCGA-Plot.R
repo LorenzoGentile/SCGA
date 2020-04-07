@@ -275,12 +275,12 @@ plotFitness <- function(y,constList,fitness){
 
 
 figSave <-  function(g,file=Sys.time()) ggsave(paste0(file,".pdf"), width = 10.521, height = 7.443, units = "in",g)
-saveMorePlot <- function(g=NULL,fileName=NULL){
+saveMorePlot <- function(g=NULL,fileName=NULL,paper="a4r", width = 10.521, height = 7.443){
   if(is.null(g))
     stop("Provide list of ggplot")
   if(is.null(fileName))
     stop("Provide name of the file")
-  pdf(fileName)
+  pdf(fileName,width = width, height =height)
   invisible(lapply(g, print))
   dev.off()
 }

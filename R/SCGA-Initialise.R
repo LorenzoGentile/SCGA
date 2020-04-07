@@ -193,7 +193,7 @@ createControl <- function(control) {
     feature                 = NULL,
     fitnessFN               = assignFitnessRank,        # Default evaluation function
     Fun                     = NULL,
-    #maxStallGenerastions  = maxGenerations             # maximum number of iterations without improvement
+    #maxStallGenerations    = maxGenerations             # maximum number of iterations without improvement
     job                     = NULL,
     keep                    = NULL,                     # vector of fields that don't have to be touched
     #localOptGenerations    = maxGenerations
@@ -260,8 +260,8 @@ createControl <- function(control) {
     control$maxEvaluations <- min(control$maxEvaluations,control$size+(control$maxGenerations-1)*(control$size-control$elitism))
     cat("\n Both maxGenerations and maxEvaluations provided.The minimum will be used \n")
 
-    # } else if(is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
-    #   control$maxGenerations <- floor(control$maxEvaluations/(control$size-control$elitism))
+    } else if(!is.null(control$maxGenerations) & is.null(control$maxEvaluations)){
+      control$maxEvaluations <- control$size + (control$maxGenerations-1)*(control$size-control$elitism)
   } else if ( is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
     control$maxGenerations  <- 1 + (control$maxEvaluations - control$size) %/% length(control$toEval-control$elitism)
   } else if (is.null(control$maxGenerations) & is.null(control$maxEvaluations) )

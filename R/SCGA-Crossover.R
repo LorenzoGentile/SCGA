@@ -117,7 +117,7 @@ CrossOperation <- function(indexs,pop,feature,keep = NULL,repairCross = NULL,bud
 
   ########## Crossover operations
 
-  while ((avoid %>% unlist() %>% length()) < exchanges) {
+  while ((avoid %>% unlist() %>% length())/2 < exchanges) {
     # if(i==45)
     #   browser()
     ########## Choose the index to swap of the first
