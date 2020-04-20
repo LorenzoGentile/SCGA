@@ -1,73 +1,99 @@
- Multipopulation <- function(initList,...){
+Multipopulation <- function(initList,...){
   list2env(initList,envir = environment())
 
-  ########## Create first populations and sigmas
+  #   ____________________________________________________________________________
+  #   Create first populations and sigmas                                     ####
+
   multiPopControlList   <- control$multiPopControl$multiPopStrategy(control,...)
   pb <- progress::progress_bar$new(total = control$maxEvaluations)
   cat("\nStart multi population optimization loop\n")
 
   while (evaluations < (control$maxEvaluations-(control$size+control$elitism)*control$multiPopControl$nPopulations)
-         && abs(control$target - best) >= control$convergence ) {
+         && abs(control$target - best) > control$convergence ) {
 
-    ########## Run optimisation over the indipendent populations
+    #   ____________________________________________________________________________
+    #    Run optimisation over the indipendent populations                      ####
+
     out                   <- LAPPLY( X = multiPopControlList, FUN = SCGA,...)
 
-    ########## Update populations simgmas and controls
-    multiPopControlList <- evolutionMultiPop(control$multiPopControl,multiPopControlList,out)
+    #   ____________________________________________________________________________
+    #   Update populations simgmas and controls                                 ####
+
+    print(generations)
 
 
-    ####### Update output #################################################################################################
+    multiPopControlList   <- evolutionMultiPop(control$multiPopControl,multiPopControlList,out)
 
-    evaluations           <- evaluations + sum( sapply(out, function(x)x$evaluations %>% max) %>% as.integer() )
+    #   ____________________________________________________________________________
+    #   Update output                                                           ####
 
-    #result$NAs[generations]           <- sum( purrr::map(out,"NAs") %>%unlist() )
-    result$NAs[generations] =0         #################### to change##########################
-    best                              <- min(purrr::map(out,"ybest") %>% as.numeric())
-    result$yForResults                <- purrr::map(out,"ybest") %>% as.numeric()
-    result$ybesthistory[generations]  <- best
-    result$stalling       <- stalling <- generations - which.min(result$ybesthistory)
+    evaluations                                <- evaluations + sum( sapply(out, function(x)x$evaluations %>% max) %>% as.integer() )
+    result$evaluations[generations]            <- evaluations
 
-    if (control$saveAll)
-      result$x[[generations]]         <- purrr::map(out,"x")
-    if (control$saveSigma)
-      result$sigma[[generations]]     <- purrr::map(out,"sigma")
+    result$NAs[generations]                    <- sum( purrr::map(out,"NAs") %>% unlist() )
+
+    result$yForResults                         <- purrr::map(out,"ybest") %>% as.numeric()
+
+    best                                       <- min(result$yForResults)
+
+    result$ybesthistory[generations]           <- best
+
+    result$xbesthistory[[generations]]         <- purrr::map(out,"xbest")[[which.min(result$yForResults)]]
+
+    result$ybesthistoryPop[[generations]]      <- purrr::map(out,"ybesthistory")
+
+    result$xbesthistoryPop[[generations]]      <- purrr::map(out,"xbesthistory")
+
+    result$summaries[[generations]]            <- purrr::map(out,"summary")
+
+    result$stalling                            <- stalling <- generations - which.min(result$ybesthistory)
+
+    result$evaluations[generations]            <- evaluations
 
 
-    ####### Backup
+    if (control$saveAll) {
+      result$x[[generations]]     <- purrr::map(out,"x")
+      result$y[[generations]]     <- purrr::map(out,"yForResults")
+      result$sigma[[generations]] <- purrr::map(out,"sigma")
+    }
+
+
+    ##  ............................................................................
+    ##  backup
 
     if(control$backup){
-      result$pop[[generations]] <- result$x[[generations]]
-      result$obs[[generations]] <- result$yForResults
-      back                      <- result
-      if(generations%%10 == 0)
-        save("back",file = paste0(  resumeFrom,".RData"))
+      if(generations%%control$backupInterval==0){
+        back                      <- result
+        back$summary              <- createSummary(control,result)
+        back$ybesthistory         <- back$ybesthistory[1:generations]
+        back$xbesthistory         <- back$xbesthistory[1:generations]
+        back$y                    <- back$y[1:generations]
+        back$x                    <- back$x[1:generations]
+        save("back",file=paste0(control$resumeFrom,".RData"))
+      }
+
     }
 
-    ####### print output
+    ##  ............................................................................
+    ##  print output                                                            ####
+
     if(control$printIter){
       media <- c(media, mean(result$yForResults, na.rm = TRUE))
-#
-#       result <-  Output(best=best, control=control,evaluations=evaluations, generations=generations,media=media, NAs=result$NAs[generations], result, y=result$yForResults,
-#                            x = purrr::map(out,"lastX"),sigma = purrr::map(out,"lastSigma"),sigma0=out[[1]]$sigma0,stalling=stalling, pb=pb)       # TODO correct this in a proper way
-
+      #
+      #       result <-  Output(best=best, control=control,evaluations=evaluations, generations=generations,media=media, NAs=result$NAs[generations], result, y=result$yForResults,
+      #                            x = purrr::map(out,"lastX"),sigma = purrr::map(out,"lastSigma"),sigma0=out[[1]]$sigma0,stalling=stalling, pb=pb)       # TODO correct this in a proper way
 
     }
 
-    ####### increment generations
-    generations    <- generations + 1
+    ##  ............................................................................
+    ##  increment generations                                                   ####
+
+    generations           <- generations + 1
 
   }
   ########## Finalize the output ############################################################################################
 
-  result$evaluations      <- evaluations
-  result$exitMessage      <- "Optimisation did not exceeded maximum function evaluations"
-  result$control          <- control
-  result$lastSigma        <- purrr::map(out,"lastSigma")
-  result$lastX            <- purrr::map(out,"lastX")
-  result$newPop           <- purrr::map(out,"newPop")
-  result$sigma0           <- purrr::map(out,"sigma0")
-  result$xbest            <- result$lastX[which(result$yForResults==best)]
-  result$ybest            <- best
+  result <- finaliseOutputMultiPop(mget(ls(),envir = environment()))
 
   return(result)
 }
@@ -78,17 +104,17 @@ evolutionMultiPop <- function(control,multiPopControlList,out){
   nToMigrate                           <- control$nMigrations
   popOrder                             <- permute::shuffle(control$nPopulations)
 
-
+  for (i in 1:length(popOrder)) multiPopControlList[[i]]$newPop    <- out[[i]]$lastX
   for (i in 1:length(popOrder)) {
 
-    multiPopControlList[[i]]$newPop    <- out[[i]]$lastX
-    destinations = rep((1:control$nPopulations)[-popOrder[i]],nToMigrate)
+    destinations = rep(popOrder[-popOrder[i]],nToMigrate)
 
-    for (j in 1:nToMigrate) {
+    for (j in nToMigrate:1) {
 
       indDest                          <- destinations[j]
-      ind                              <- sample(multiPopControlList[[indDest]]$toEval,1)
-      multiPopControlList[[popOrder[indDest]]]$lastX[[ind]] <- out[[popOrder[i]]]$newPop[[j]]
+      notElitist                       <- (multiPopControlList[[indDest]]$size - multiPopControlList[[indDest]]$elitism): multiPopControlList[[indDest]]$size
+      ind                              <- sample(notElitist,1)
+      multiPopControlList[[popOrder[indDest]]]$newPop[[ind]] <- out[[popOrder[i]]]$newPop[[j]]
 
     }
   }
@@ -103,7 +129,7 @@ populationStrategyParallel <- function(control,...) {
   printOrPlot                          <- c(grep("print",namesControl),grep("plot",namesControl))
 
   multiPopControl[printOrPlot]         <- FALSE
-  multiPopControl$multiPopulation <- multiPopControl$parallel <- multiPopControl$saveX <- multiPopControl$saveSigma <- FALSE
+  multiPopControl$multiPopulation <- multiPopControl$parallel <- multiPopControl$saveAll<- FALSE
   multiPopControl$cpus                 <- NA
   multiPopControl$localOptGenerations  <- Inf
 

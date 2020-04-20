@@ -36,7 +36,7 @@ createPopulationLHD <- function(feature,size,createCandidate=createCandidate,cl=
 
   if(is.null(cl))
     pop <- sapply(seq_len(size), function(i) createCandidateLHD(X = seeds[i],independentLhd =independentLhd[i,], notdependent=notdependent,
-                                                                feature=feature,newCand=TRUE,...))
+                                                                feature=feature,newCand=TRUE,...),simplify = F)
   else
     pop <- parLapply(cl=cl,X=floor(runif(size,min=0,max=1e6)), fun=createCandidate,feature=feature,newCand=TRUE,...)
 

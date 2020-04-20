@@ -10,15 +10,51 @@
 #' @param dontChangeMut numeric vector. Feature number that not undergo to Mutation
 #' @param elitism numeric. Number of candidates to preserve to the next population. Default is size / 10
 #' @param evaluatePopDF function. See \code{\link{evaluatePopDF}}
-#' @param feature. list or function that creates the list. See \code{\link{feature}}
+#' @param feature list or function that creates the list. See \code{\link{feature}}
 #' @param fitnessFN function. Receives the observations of the objective functions and returns
 #' @param Fun function. Objective function
 #' a vector of the same length repesententing the fitness. Default is Ranking fitness.
-#'
-#'
-#'
-#'
-#'
+#' @param maxStallGenerations numeric. Maximum number of iterations without improvements. If overcomen, the population is reinitialised.
+#' @param keep vector of characters. Additional columns in the matrix representing the candidate.
+#' @param localOptGenerations numeric. Maximum number of iterations without improvements. If overcomen,
+#'  a local optimisation on the numeric variables starts from the best solution found freezing the remaining genes. Then, the population is reinitialised.
+#' @param localOptimiser function. Function that performs the local optimisation. Default si optim. function. \code{\link{LocalOptimisationMatlab}} is also an option. It starts
+#' connection with matlab and uses fmnincon.
+#' @param maxEvaluations numeric. Stopping criterion. Maximum number of evaluations allowed. If more stopping criterion are given, the more strict will be used.
+#' @param maxGenerations numeric. Stopping criterion. Maximum number of generations allowed. If more stopping criterion are given, the more strict will be used.
+#' @param multiPopulation Boolean. Use or not multiPopulation strategy. controls ar specified in multiPopControl
+#' @param maxRelaxation numeric. Value in [0,1]. Indicates the fraction of constraint relaxation at the beginning of the optimisation.
+#' @param multiPopControl list. controls are :...
+#' @param mutRate numeric. Value in [0,1]. Probablity to mutate a candidate
+#' @param parallel Boolean. Indicates wheter to create a cluster with \code{\link{MakeCluster}} command using the number of cores indicated by @param cpus.
+#' @param percCross numeric. Value in [0,1]. Indicates the maximum percentage of genes to swap during crossover.
+#' @param percMut numeric. Value in [0,1]. Indicates the maximum percentage of genes to mutate
+#' @param plotEvolution Boolean. plot the evoluation of the best found solution.
+#' @param plotEvolutionLimit numeric. Upper limit for the plotEvolution plot. Helps the visualisation when the initial best is far from final best.
+#' @param plotFitness Boolean. If there are constraints, it produces a plot that shows the fitness in respect of the objective function value and feasibility.
+#' @param plotPopulation Boolean. Plot an historgram for every gene. The histograms show the count of the values assumed in the current population.
+#' @param plotSigma Boolean. Plot an historgram for every sigma The histograms show the count of the values assumed in the current population.
+#' @param plotInterval integer. Create the plots every plotInterval generations.
+#' @param popCreateFun function. It creates new candidates. Default is \code{\link{createCandidate}}
+#' @param printIter Boolean. Print on screen the evolution of the optimisation.
+#' @param printSigma Boolean. Print on screen the mean values of sigma.
+#' @param printXMin Boolean. Print on screen the current xbest.
+#' @param printPlot Boolean. Save plots in a dedicated folder: currentDirectory/runResults/control$job$algo.name/control$seed
+#' @param probability vector. It specifies the probability of every gene to be selected by the operators. Default is all 1.
+#' @param pureFeasibility numeric. Value in [0,1]. Fraction of the available budget to be spent without constraint relaxation.
+#' @param repairFun function. Repair function used to repair the possible corrupted candidates.
+#' @param resume Boolean. Restart the optimisation loading a backup RData names as @param resumeFrom.
+#' @param resumeFrom character. Name for a possible backup RData
+#' @param saveAll  Boolean. save all the x at each iteration
+#' @param seed  integer. Seed to use for repetitivity .
+#' @param selection function. selection method function. See \code{\link{selectpoolTournament}}
+#' @param size  integer. Population size
+#' @param target numeric. Knwown minimum value achievable. Stopping criterion. If reached wihin the specified tolerance @param convergence
+#' @param tournamentSize integer. tournament size for \code{\link{selectpoolTournament}}
+#' @param updateSigma Boolean. To use adaptive step size mutation
+#' @param useCrossover Boolean. To crossover as operator.
+#' @param vectorOnly Boolean. Pass to the objective function the candidate as vector.
+#' @param vectorized Boolean. Pass to the objective function the entire population.
 
 Initialise <- function(control = list(),...) {
 
@@ -176,6 +212,7 @@ createControl <- function(control) {
 
   #initializatio of hyperparatmeter for Optimization
   con <- list(
+    algoName                = "SCGA",
     analysePerformance      = F,
     backup                  = F,
     backupInterval          = 30,
@@ -216,19 +253,18 @@ createControl <- function(control) {
     plotPopulation          = FALSE,
     plotSigma               = FALSE,                     # Print maximum values of sigmas
     plotInterval            = 1,
-    popCreateFun            = createPopulationLHD,       # function used to create the initial population
+    popCreateFun            = createPopulation,       # function used to create the initial population   createPopulationLHD
     printIter               = TRUE,
     printSigma              = FALSE,
     printXMin               = FALSE,
     printPlot               = FALSE,
     probability             = NULL,
+    problemName             = "anonimousFunction",
     pureFeasibility         = 0   ,
-    repairCross             = NULL,
     repairFun               = NULL,
     repairMutation          = NULL,
     resume                  = FALSE,
-    resumeFrom              = "unknownFunction",
-    saveSigma               = FALSE,
+    resumeFrom              = "anonimousFunction",
     saveAll                 = FALSE,
     seed                    = sample(1e6, 1),
     selection               = selectpoolTournament,
@@ -241,10 +277,9 @@ createControl <- function(control) {
     vectorized              = FALSE,                    # the obj accepts all the candidates togheter
     x                       = NULL
   )
+
   con[names(control)]  = control
-  con$repairCross      = control$repairCross
   con$repairFun        = control$repairFun
-  con$repairMutation   = control$repairMutation
   control              <- con
   if(is.null(control$resumeFrom))
     control$resumeFrom   <- paste(control$resumeFrom,Sys.time(),sep="-" )
@@ -272,10 +307,11 @@ createControl <- function(control) {
     control$maxStallGenerations                  <- Inf
 
   if(is.null(control$localOptGenerations))
-    control$localOptGenerations                  <-  Inf
+    control$localOptGenerations                  <- Inf
 
   ########## multiPopulation  ###########################################################################################################
   if(control$multiPopulation){
+    control$algoName                             <- "SCGA-MultiPop"
     if(is.null(control$multiPopControl))
       control$multiPopControl                    <- list()
 
@@ -295,7 +331,6 @@ createControl <- function(control) {
 
       }else if(control$parallel)
         control$multiPopControl$nPopulations      <- control$cpus
-
     }
     if(is.null(control$multiPopControl$migrationInterval)){
       if(control$multiPopControl$migrationType == "generation")

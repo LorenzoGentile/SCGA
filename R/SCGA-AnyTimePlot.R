@@ -76,7 +76,7 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,
                                                                                                                        legend.position = c(themePosX, themePosY)
   )
   if(retPlotDf)
-    return(list( h,plotDF))
+    return(list(plot=h,data=plotDF))
   else
     return(h)
 }

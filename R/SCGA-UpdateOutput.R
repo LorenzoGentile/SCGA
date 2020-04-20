@@ -32,9 +32,9 @@ updateOutput <- function(env){
 
 
     lastLocal                           <- max(which(result$localOpt==TRUE))               #not Working
-    #not Working
+
     lastLocal                           <- ifelse(lastLocal==1,0,lastLocal)                #not Working
-    #not Working
+
     ytoConsider                         <- result$ybesthistoryFeas[lastLocal:generations]  #not Working
 
     if(min(ytoConsider) <= stallRef - control$tolerance){
@@ -60,7 +60,7 @@ updateOutput <- function(env){
 
 
     lastLocal                           <- max(which(result$localOpt==TRUE))
-    # lastLocal                         <- ifelse(lastLocal==1,0,lastLocal)
+
     ytoConsider                         <- result$ybesthistory[lastLocal:generations]
 
     if(min(ytoConsider) <= stallRef - control$tolerance){

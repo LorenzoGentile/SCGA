@@ -27,12 +27,92 @@ the known minimum}
 
 \item{evaluatePopDF}{function. See \code{\link{evaluatePopDF}}}
 
-\item{feature.}{list or function that creates the list. See \code{\link{feature}}}
+\item{feature}{list or function that creates the list. See \code{\link{feature}}}
 
 \item{fitnessFN}{function. Receives the observations of the objective functions and returns}
 
 \item{Fun}{function. Objective function
 a vector of the same length repesententing the fitness. Default is Ranking fitness.}
+
+\item{maxStallGenerations}{numeric. Maximum number of iterations without improvements. If overcomen, the population is reinitialised.}
+
+\item{keep}{vector of characters. Additional columns in the matrix representing the candidate.}
+
+\item{localOptGenerations}{numeric. Maximum number of iterations without improvements. If overcomen,
+a local optimisation on the numeric variables starts from the best solution found freezing the remaining genes. Then, the population is reinitialised.}
+
+\item{localOptimiser}{function. Function that performs the local optimisation. Default si optim. function. \code{\link{LocalOptimisationMatlab}} is also an option. It starts
+connection with matlab and uses fmnincon.}
+
+\item{maxEvaluations}{numeric. Stopping criterion. Maximum number of evaluations allowed. If more stopping criterion are given, the more strict will be used.}
+
+\item{maxGenerations}{numeric. Stopping criterion. Maximum number of generations allowed. If more stopping criterion are given, the more strict will be used.}
+
+\item{multiPopulation}{Boolean. Use or not multiPopulation strategy. controls ar specified in multiPopControl}
+
+\item{maxRelaxation}{numeric. Value in [0,1]. Indicates the fraction of constraint relaxation at the beginning of the optimisation.}
+
+\item{multiPopControl}{list. controls are :...}
+
+\item{mutRate}{numeric. Value in [0,1]. Probablity to mutate a candidate}
+
+\item{parallel}{Boolean. Indicates wheter to create a cluster with \code{\link{MakeCluster}} command using the number of cores indicated by @param cpus.}
+
+\item{percCross}{numeric. Value in [0,1]. Indicates the maximum percentage of genes to swap during crossover.}
+
+\item{percMut}{numeric. Value in [0,1]. Indicates the maximum percentage of genes to mutate}
+
+\item{plotEvolution}{Boolean. plot the evoluation of the best found solution.}
+
+\item{plotEvolutionLimit}{numeric. Upper limit for the plotEvolution plot. Helps the visualisation when the initial best is far from final best.}
+
+\item{plotFitness}{Boolean. If there are constraints, it produces a plot that shows the fitness in respect of the objective function value and feasibility.}
+
+\item{plotPopulation}{Boolean. Plot an historgram for every gene. The histograms show the count of the values assumed in the current population.}
+
+\item{plotSigma}{Boolean. Plot an historgram for every sigma The histograms show the count of the values assumed in the current population.}
+
+\item{plotInterval}{integer. Create the plots every plotInterval generations.}
+
+\item{popCreateFun}{function. It creates new candidates. Default is \code{\link{createCandidate}}}
+
+\item{printIter}{Boolean. Print on screen the evolution of the optimisation.}
+
+\item{printSigma}{Boolean. Print on screen the mean values of sigma.}
+
+\item{printXMin}{Boolean. Print on screen the current xbest.}
+
+\item{printPlot}{Boolean. Save plots in a dedicated folder: currentDirectory/runResults/control$job$algo.name/control$seed}
+
+\item{probability}{vector. It specifies the probability of every gene to be selected by the operators. Default is all 1.}
+
+\item{pureFeasibility}{numeric. Value in [0,1]. Fraction of the available budget to be spent without constraint relaxation.}
+
+\item{repairFun}{function. Repair function used to repair the possible corrupted candidates.}
+
+\item{resume}{Boolean. Restart the optimisation loading a backup RData names as @param resumeFrom.}
+
+\item{resumeFrom}{character. Name for a possible backup RData}
+
+\item{saveAll}{Boolean. save all the x at each iteration}
+
+\item{seed}{integer. Seed to use for repetitivity .}
+
+\item{selection}{function. selection method function. See \code{\link{selectpoolTournament}}}
+
+\item{size}{integer. Population size}
+
+\item{target}{numeric. Knwown minimum value achievable. Stopping criterion. If reached wihin the specified tolerance @param convergence}
+
+\item{tournamentSize}{integer. tournament size for \code{\link{selectpoolTournament}}}
+
+\item{updateSigma}{Boolean. To use adaptive step size mutation}
+
+\item{useCrossover}{Boolean. To crossover as operator.}
+
+\item{vectorOnly}{Boolean. Pass to the objective function the candidate as vector.}
+
+\item{vectorized}{Boolean. Pass to the objective function the entire population.}
 }
 \description{
 This function returns the default controls and other useful variables.
