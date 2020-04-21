@@ -7,7 +7,7 @@
 #' @return list
 #' @examples
 #'
-SCGA <- function(control = list(),...) {
+SCGA <- function(control = list(),extraParam=NULL,moreArgsMapply=NULL,...) {
 
   #   ____________________________________________________________________________
   #     Initialise control and others                                         ####
@@ -43,6 +43,14 @@ SCGA <- function(control = list(),...) {
     list2env(backList,envir = environment())
     rm(backList)
   }
+
+##%######################################################%##
+#                                                          #
+####            Only for branch SatTracking             ####
+#                                                          #
+##%######################################################%##
+
+if(!is.null(control$budgetTot)) budget=control$budgetTot
 
 
 

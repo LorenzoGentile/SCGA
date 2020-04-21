@@ -152,6 +152,7 @@ Initialise <- function(control = list(),...) {
     SAPPLY <- function(...){
       parSapply(cl,...)
     }
+
   }
 
   ####### Ridefine objective function  ########

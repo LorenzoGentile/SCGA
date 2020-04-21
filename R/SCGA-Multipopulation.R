@@ -1,6 +1,6 @@
-Multipopulation <- function(initList,...){
+Multipopulation <- function(initList,extraParam=NULL,moreArgsMapply=NULL,...){
   list2env(initList,envir = environment())
-
+browser()
   #   ____________________________________________________________________________
   #   Create first populations and sigmas                                     ####
 
@@ -14,7 +14,10 @@ Multipopulation <- function(initList,...){
     #   ____________________________________________________________________________
     #    Run optimisation over the indipendent populations                      ####
 
-    out                   <- LAPPLY( X = multiPopControlList, FUN = SCGA,...)
+
+    out                     <- mapply(SCGA, multiPopControlList,cases=extraParam)
+    # out                   <- LAPPLY( X = multiPopControlList, FUN = SCGA,...)
+
 
     #   ____________________________________________________________________________
     #   Update populations simgmas and controls                                 ####
