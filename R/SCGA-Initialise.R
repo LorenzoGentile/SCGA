@@ -111,7 +111,6 @@ Initialise <- function(control = list(),...) {
     cl      <- makeCluster(cpus, type = cltype)                                                              # Cluster Settings
     # Cluster Settings
     clusterExport(cl, varlist = "Fun", envir = environment())                                                # Cluster Settings
-    #clusterEvalQ(cl, "orbit2R")                                                                             # Cluster Settings
     clusterEvalQ(cl, "bazar")                                                                                # Cluster Settings
     print(paste0("loaded cluster: - ",cpus," - nodes"))                                                      # Cluster Settings
   } else                                                                                                     # Cluster Settings

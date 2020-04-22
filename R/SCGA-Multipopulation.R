@@ -1,10 +1,11 @@
 Multipopulation <- function(initList,extraParam=NULL,moreArgsMapply=NULL,...){
   list2env(initList,envir = environment())
-browser()
+
   #   ____________________________________________________________________________
   #   Create first populations and sigmas                                     ####
 
   multiPopControlList   <- control$multiPopControl$multiPopStrategy(control,...)
+
   pb <- progress::progress_bar$new(total = control$maxEvaluations)
   cat("\nStart multi population optimization loop\n")
 
@@ -15,8 +16,8 @@ browser()
     #    Run optimisation over the indipendent populations                      ####
 
 
-    out                     <- mapply(SCGA, multiPopControlList,cases=extraParam)
-    # out                   <- LAPPLY( X = multiPopControlList, FUN = SCGA,...)
+    # out                     <- mapply(SCGA, multiPopControlList,cases=extraParam)
+    out                   <- LAPPLY( X = multiPopControlList, FUN = SCGA,...)
 
 
     #   ____________________________________________________________________________
@@ -121,7 +122,7 @@ evolutionMultiPop <- function(control,multiPopControlList,out){
 
     }
   }
-  return(multiPopControlList )
+  return(multiPopControlList)
 }
 
 populationStrategyParallel <- function(control,...) {

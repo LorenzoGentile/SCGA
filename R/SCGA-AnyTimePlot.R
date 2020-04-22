@@ -1,3 +1,16 @@
+#' This function returns the anytime performance plot and the summary dataframe out of
+#'  Control is a list of the settings:
+#' @param convergence Stopping criterion: absolute difference between the current best and
+#' the known minimum
+#' @param cpus numeric. indicatig number of cores over which parallelise
+#' @param creatCandFun function. See \code{\link{createCandidate}}
+#' @param createMutFun function. See \code{\link{createMutFun}}
+#' @param crossFun function. See \code{\link{crossFun}}
+#' @param dontChangeCross numeric vector. Feature number that not undergo to Crossover
+#' @param dontChangeMut numeric vector. Feature number that not undergo to Mutation
+#' @param elitism numeric. Number of candidates to preserve to the next population. Default is size / 10
+#' @param evaluatePopDF function. See \code{\link{evaluatePopDF}}
+
 anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,
                     useMinMax = T, confidenceInterval = c(0.25,0.75),plotDF=NULL,funSample=F,excludeValueHigher=Inf, themePosX =.8,themePosY =.9,errorBar=F )
 {
@@ -5,22 +18,19 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,
   if(is.null(plotDF)){
     retPlotDf=T
     requireNamespace("ggplot2")
-    dfNames <- c("algoName", "replication", "iteration", "iterBest")
+    dfNames <- c("algoName", "seed", "iteration", "iterBest")
     if (!all(dfNames %in% names(data))) {
       stop("Wrong df names were provided")
     }
 
-
     if(funSample)
       data= functionReduce(data)
 
-
-
-    toRemove=data %>% group_by(algoName,replication) %>%  filter( iteration==max(iteration)) %>% summarise(toRemove=iterBest>excludeValueHigher)
+    toRemove=data %>% group_by(algoName,seed) %>%  filter( iteration==max(iteration)) %>% summarise(toRemove=iterBest>excludeValueHigher)
 
     toRemove=toRemove %>% filter(toRemove==T)
     for (toRm in seq(1,length.out = nrow(toRemove),by = 1)) {
-      data = data[- which(c(data$algoName==toRemove$algoName[toRm] & data$replication==toRemove$replication[toRm])), ]
+      data = data[- which(c(data$algoName==toRemove$algoName[toRm] & data$seed==toRemove$seed[toRm])), ]
     }
 
     if(data$iterBest %>% min() <=0 & ylog){
@@ -84,17 +94,17 @@ sampleData=function(iter,iterBest,iteration){iterBest[which.min(abs(iteration-it
 
 functionReduce <- function(data){
 
-  df=list(NA,length(unique(data$algoName))*length(unique(data$replication)))
+  df=list(NA,length(unique(data$algoName))*length(unique(data$seed)))
   ind=1
   evals=seq(1,5e4,100)
   for (algo in unique(data$algoName)){
     subData <- data %>% filter(algoName==algo)
-    for (replica in  unique(subData$replication)) {
+    for (replica in  unique(subData$seed)) {
 
-      subsubData <- subData %>% filter(replication==replica)
+      subsubData <- subData %>% filter(seed==replica)
 
       samp=sapply(evals, sampleData,subsubData$iterBest,subsubData$iteration)
-      df[[ind]]=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=algo,replication=replica))
+      df[[ind]]=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=algo,seed=replica))
 
       ind=ind+1
     }
@@ -119,7 +129,7 @@ functionReduce <- function(data,sampling=100){
     name = unlist(strsplit(nome, split="\\."))
     evals=seq(min(data$iteration),max(data$iteration),length.out =  sampling)
     samp=sapply(evals,sampleData,data$iterBest,data$iteration)
-    df=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=name[1],replication=name[2]))
+    df=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=name[1],seed=name[2]))
     return(df)
   }
   browser()
@@ -134,18 +144,18 @@ functionReduce <- function(data,sampling=100){
 }
 functionReduce <- function(data,sampling=100){
 data=data[!is.na(data$iteration),]
-  df=list(NA,length(unique(data$algoName))*length(unique(data$replication)))
+  df=list(NA,length(unique(data$algoName))*length(unique(data$seed)))
   ind=1
   evals=seq(1,5e4,100)
   for (algo in unique(data$algoName)){
     subData <- data %>% filter(algoName==algo)
     evals=seq(min(subData$iteration),max(subData$iteration),length.out =  sampling)
-    for (replica in  unique(subData$replication)) {
+    for (replica in  unique(subData$seed)) {
 
-      subsubData <- subData %>% filter(replication==replica)
+      subsubData <- subData %>% filter(seed==replica)
 
       samp=sapply(evals, sampleData,subsubData$iterBest,subsubData$iteration)
-      df[[ind]]=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=algo,replication=replica))
+      df[[ind]]=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=algo,seed=replica))
 
       ind=ind+1
     }

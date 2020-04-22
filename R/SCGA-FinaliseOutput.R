@@ -57,7 +57,22 @@ finaliseOutputMultiPop <- function(env){
   result$ybesthistoryPop <- purrr:::transpose(result$ybesthistoryPop) %>% sapply(FUN=function(x)unlist(x,recursive = F),simplify = F)
   result$xbesthistoryPop <- purrr:::transpose(result$xbesthistoryPop) %>% sapply(FUN=function(x)unlist(x,recursive = F),simplify = F)
 
-  result$summariesPop <-  purrr:::transpose(result$summaries) %>% sapply(FUN=function(x) dplyr::bind_rows(x) ,simplify = F)
+
+  summariesMod <- try(sapply(1:length(result$summaries),function(generations){
+      if(generations==1)
+        return(result$summaries[[1]])
+      # y is all the summaries of the same generation
+      y=sapply(1:length(result$summaries[[generations]]), function(pop){
+
+        result$summaries[[generations]][[pop]]$evaluations =  result$summaries[[generations]][[pop]]$evaluations + sum(sapply(seq(1,(generations-1)),function(jj)max(result$summaries[[jj]][[pop]]$evaluations)))
+        return(result$summaries[[generations]][[pop]])
+      },simplify = F)
+      return(y)},simplify = F))
+
+if(!is.character(summariesMod)) result$summaries <- summariesMod
+
+
+  result$summariesPop <-  try(purrr:::transpose(result$summaries) %>% sapply(FUN=function(x) dplyr::bind_rows(x) ,simplify = F))
   result$ybestPop       <- sapply(result$ybesthistoryPop,min)
   result$xbestPop       <- mapply(function(y,x)x[[which.min(y)]] ,result$ybesthistoryPop,result$xbesthistoryPop,SIMPLIFY = F)
 
