@@ -1,4 +1,43 @@
+InitPopAndSigma <- function(control,feature,LAPPLY,...){
+  #   ____________________________________________________________________________
+  #   population                                                             ####
 
+  if(is.null(control$newPop))
+    suppressWarnings( newPop <- control$popCreateFun(feature,size = control$size,
+                                                     control$createCandFun,addnames = control$keep,...))
+
+  else newPop <- control$newPop
+
+  #   ____________________________________________________________________________
+  #   Repair                                                                  ####
+
+  if(!is.null(control$repairFun)) newPop <- LAPPLY(X=newPop, control$repairFun,budgetTot=control$budgetTot)
+
+
+  #   ____________________________________________________________________________
+  #   Sigma                                                                   ####
+
+  if(is.null(control$sigma)){
+
+    if(is.null(control$sigma0))
+      sigma0        <- initSigma(feature, control$dontChangeMut)
+    else
+      sigma0        <- control$sigma0
+
+    Names           <- names(sigma0)
+    sigma           <- matrix(rep(sigma0, control$size), control$size, , byrow = T)
+    colnames(sigma) <- Names
+
+  } else sigma         <- control$sigma
+
+
+  return(list(
+    newPop = newPop,
+    sigma  = sigma,
+    sigma0 = sigma0
+
+  ))
+}
 createPopulation <- function(feature,size,createCandidate=createCandidate,cl=NULL,...){
 if(is.null(cl))
   pop <- lapply(X=floor(runif(size,min=0,max=1e6)), FUN=createCandidate,feature=feature,newCand=TRUE,...)

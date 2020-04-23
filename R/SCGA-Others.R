@@ -31,8 +31,8 @@ RestartFromBackup <- function(resumeFrom,newPop){             #Function still To
   set.seed(result$control$seed)
   resuming                 <-  T
   if(result$control$saveAll){
-  y                        <-  y[[max(which(!is.na(ybesthistory)))]]
-  newPop                   <-  x[[max(which(!is.na(xbesthistory)))]]
+    y                        <-  y[[max(which(!is.na(ybesthistory)))]]
+    newPop                   <-  x[[max(which(!is.na(xbesthistory)))]]
   } else
     newPop[[1]]            <-  xbesthistory[[max(which(!is.na(xbesthistory)))]]
 
@@ -76,49 +76,7 @@ EvalCand2Operator<- function(newPop,control){
   return(list(ChangeCross=ChangeCross,ChangeMut=ChangeMut))
 }
 
-InitPopAndSigma <- function(control,feature,LAPPLY,...){
 
-  if(is.null(control$newPop)){
-
-    ########## Create population
-    suppressWarnings( newPop <- control$popCreateFun(feature,size = control$size,
-                                                     control$createCandFun,addnames = control$keep,...)
-    )
-
-    ########## Repair
-    if(!is.null(control$repairFun))
-
-      newPop        <- LAPPLY(X=newPop, control$repairFun,budgetTot=control$budgetTot)
-  } else{
-
-    newPop          <- control$newPop
-
-  }
-
-
-  if(is.null(control$sigma)){
-    ########## Sigma
-    if(is.null(control$sigma0))
-      sigma0        <- initSigma(feature, control$dontChangeMut)
-    else
-      sigma0        <- control$sigma0
-
-    Names           <- names(sigma0)
-    sigma           <- matrix(rep(sigma0, control$size), control$size, , byrow = T)
-    colnames(sigma) <- Names
-
-  } else{
-
-    sigma         <- control$sigma
-
-  }
-  return(list(
-    newPop = newPop,
-    sigma  = sigma,
-    sigma0 = sigma0
-
-  ))
-}
 
 assignFitnessProportional <- function(y) {
   ## scale the observation between 0 and 1. assigning 1 to the lowest value and 0 to the highest -> Minimization
@@ -245,7 +203,7 @@ OptimizerClass<- function(job=NULL,resumeFrom=NULL,control){
                  x                  = rep(list(NA),control$maxGenerations),
                  xbesthistory       = rep(list(NA),control$maxGenerations),
                  plots              = list(population= list(generations=NULL, plot=NULL),
-                                          sigma= list(generations=NULL, plot=NULL))
+                                           sigma= list(generations=NULL, plot=NULL))
   )
   class(result) <- "SCGAClass"
 
