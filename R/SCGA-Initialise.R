@@ -334,9 +334,9 @@ createControl <- function(control) {
     }
     if(is.null(control$multiPopControl$migrationInterval)){
       if(control$multiPopControl$migrationType == "generation")
-        control$multiPopControl$migrationInterval <- control$maxGenerations %/% 10
+        control$multiPopControl$migrationInterval <- ceiling(control$maxGenerations / 10)
       else
-        control$multiPopControl$migrationInterval <- (control$maxEvaluations/control$multiPopControl$nPopulations) %/% 10
+        control$multiPopControl$migrationInterval <- ceiling((control$maxEvaluations/control$multiPopControl$nPopulations) / 10)
     }
   }
   return(control)
