@@ -180,7 +180,7 @@ selectBest <- function(fitness, size = (floor(length(fitness) / 2) + 1),...) {
 }
 
 
-OptimizerClass<- function(job=NULL,resumeFrom=NULL,control){
+OptimizerClass<- function(resumeFrom=NULL,control){
   # Create  class
 
   result <- list(lastX              = NULL,
@@ -193,7 +193,6 @@ OptimizerClass<- function(job=NULL,resumeFrom=NULL,control){
                  evaluations        = NULL,
                  sigma              = rep(list(NA),control$maxGenerations),
                  control            = control,
-                 job                = job,
                  performance        = matrix(NA,control$maxGenerations,2,dimnames = list(NULL,c("crossover","mutation"))),
                  resumeFrom         = resumeFrom,
                  NAs                = rep(NA,control$maxGenerations),

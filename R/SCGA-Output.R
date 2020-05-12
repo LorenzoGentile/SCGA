@@ -1,4 +1,4 @@
-Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,constList,evaluations,eval,fitness,generations,identicX,media, NAs, result, y,x,sigma,sigma0,stalling, pb,cRef=NULL){
+Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,constList,evaluations,eval,fitness,generations,identicX,media, NAs, newPop,result, y,x,sigma,sigma0,stalling, pb,cRef=NULL){
   # tictoc::toc()
 
   cat("\014")
@@ -24,13 +24,14 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
   ##  backup
   if(control$backup){
     if(generations%%control$backupInterval==0){
-      back                      <- result
-      back$summary              <- createSummary(control,result)
-      back$y=back$y[1:generations]
-      back$ybesthistory=back$ybesthistory[1:generations]
-      back$xbesthistory=back$xbesthistory[1:generations]
-      back$x=back$x[1:generations]
-      save("back",file=paste0(control$resumeFrom,".RData"))
+      back              <- result
+      back$newPop       <- newPop
+      back$summary      <- createSummary(control,result)
+      back$y            <- back$y[1:generations]
+      back$ybesthistory <- back$ybesthistory[1:generations]
+      back$xbesthistory <- back$xbesthistory[1:generations]
+      back$x            <- back$x[1:generations]
+      save("back",file  = paste0(control$resumeFrom,".RData"))
     }
 
   }

@@ -1,4 +1,4 @@
-createPopulationLHD <- function(feature,size,createCandidate=createCandidate,cl=NULL,...){
+createPopulationLHD <- function(feature,size,createCandidate=createCandidateLHD,cl=NULL,...){
 
   getBounds <- function(x){
     bounds <- x$bound()
@@ -9,7 +9,7 @@ createPopulationLHD <- function(feature,size,createCandidate=createCandidate,cl=
     else
       return(bounds)
   }
-  countingPresence     <- function(cand){
+  countingPresence   <- function(cand){
     temp             <- rle(sort(cand[, "feature"] ))
     out[temp$values] <- temp$lengths
     out
@@ -34,11 +34,8 @@ createPopulationLHD <- function(feature,size,createCandidate=createCandidate,cl=
   independentLhd <- firstLHD[,notdependent]
   seeds          <- floor(runif(size,min=0,max=1e6))
 
-  if(is.null(cl))
-    pop <- sapply(seq_len(size), function(i) createCandidateLHD(X = seeds[i],independentLhd =independentLhd[i,], notdependent=notdependent,
+  pop <- sapply(seq_len(size), function(i) createCandidateLHD(X = seeds[i],independentLhd =independentLhd[i,], notdependent=notdependent,
                                                                 feature=feature,newCand=TRUE,...),simplify = F)
-  else
-    pop <- parLapply(cl=cl,X=floor(runif(size,min=0,max=1e6)), fun=createCandidate,feature=feature,newCand=TRUE,...)
 
   #   ____________________________________________________________________________
   #   try to improve the population sparsity                                  ####
@@ -57,8 +54,8 @@ createPopulationLHD <- function(feature,size,createCandidate=createCandidate,cl=
   lhds <- sapply(unique(counts$x), function(i){
 
     involved <- counts$ix[counts$x==i]
-    if(i==size)
-      lhd <- firstLHD[,involved]
+    if(i==size) lhd <- firstLHD[,involved]
+    else if(i==0)return(list(lhd=NULL,involved=NULL))
     else{
     bounds   <- sapply(feature[involved],getBounds )
     types    <- purrr::map(feature[involved],"type") %>% unlist
@@ -70,8 +67,9 @@ createPopulationLHD <- function(feature,size,createCandidate=createCandidate,cl=
   simplify = F)
 
   indexes <- purrr::map(lhds,"involved")
-  lhd     <- purrr::map(lhds,"lhd") %>% reshape2::melt()
-
+  lhd     <- purrr::map(lhds,"lhd")
+  lhd     <- lhd[!sapply(lhd, is.null)]
+  lhd     <- lhd  %>% reshape2::melt()
 
   # for (i in seq_along(pop)) {
   popOld <- pop
@@ -93,6 +91,7 @@ createPopulationLHD <- function(feature,size,createCandidate=createCandidate,cl=
   pop       <- append(pop[feasibles],popOld[!feasibles])
   return(pop)
 }
+
 
 checkBounds <- function(feature,x,row){
 
@@ -151,15 +150,14 @@ checkCandidateLHD <- function(x,feature,notdependent,...){
 }
 
 createCandidateLHD <- function(X,feature,independentLhd,notdependent,...){
+
   x = NULL
   set.seed(X)
   j=1
+
   for ( i in notdependent){
-
     x <- rbind(x,createDepDF(feature,i,id=max(0,nrow(x))+1,xDone=x,value = independentLhd[j],...))
-    j = j+1
+    j <- j + 1
   }
-
   return(x)
-
 }

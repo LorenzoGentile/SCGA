@@ -152,6 +152,6 @@ populationStrategyParallel <- function(control,...) {
   out                                  <- rep(list(multiPopControl),nPopulations)
   seeds                                <- sample(1e6,nPopulations)
 
-  out                                  <- mapply(seeds, FUN=function(seed,out) {out$seed=seed ; return(out)},out=out,SIMPLIFY  = FALSE )
+  out                                  <- mapply(seeds, FUN=function(seed,out) {out$seed=seed ; return(out)},out=out,SIMPLIFY  = FALSE ,...)
   return(out)
 }

@@ -128,7 +128,7 @@ if(!is.null(control$budgetTot)) budget=control$budgetTot
                        constList=constList,evaluations=evaluations,
                        eval= result$evaluations, fitness=fitness,
                        generations=generations,identicX=identicX,
-                       media = mean(y, na.rm = TRUE), NAs=NAs,
+                       media = mean(y, na.rm = TRUE), NAs=NAs,newPop = newPop,
                        result=result, y=yForResults,x=x,sigma=sigma,
                        sigma0=sigma0,stalling=stalling, pb=pb,cRef=control$cRef)
     }

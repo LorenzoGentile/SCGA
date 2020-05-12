@@ -40,7 +40,7 @@ Plot <- function (y,yT,stalling,eval,limit=Inf){
   if(all(c(y,yT)>0))
     g = g + scale_y_log10()
 
- return(g)
+  return(g)
 
 }
 Plotsigmas <- function(toCompare, generations, path,printIt,sigma0,subpath="/opt-gen-sigma-") {
@@ -96,7 +96,7 @@ PlotPopulation <- function(toCompare, generations,path,printIt,subpath="/opt-gen
                              theme_minimal()+
                              theme(legend.position = 'none')#+
                            # ggtitle("Best found solutions")
-                             )
+    )
 
     if(printIt)
       ggsave(paste0(path,"/opt-gen-",generations,".pdf"), width = 40, height = 20, units = "cm",g)
@@ -109,7 +109,7 @@ PlotPopulation <- function(toCompare, generations,path,printIt,subpath="/opt-gen
 PlotPopulationBest <- function(toCompare, generations,path,printIt,subpath="/opt-gen-",toCompBest,algoNames=NULL){
 
 
-    makeDataFrame <- function(toCompare,algo){
+  makeDataFrame <- function(toCompare,algo){
     if(is.list(toCompare)){
       toCompare <- sapply(toCompare, function(x){
         out= rep(NA, length(feature))
@@ -133,46 +133,46 @@ PlotPopulationBest <- function(toCompare, generations,path,printIt,subpath="/opt
     ranges  <- sapply(feature, function(x) return(c(max(x$bound()),min(x$bound()))),simplify = T)
     toCompareDF$xmin=ranges[1,toCompareDF$variable]
     toCompareDF$xmax=ranges[2,toCompareDF$variable]
-toCompareDF
-    }
-    if(!is.list(toCompare[[1]])){
-      if(is.null(algoNames))
-        algoNames="unknown"
-      toCompareDF <-   makeDataFrame(toCompare,algoNames)
-    }
+    toCompareDF
+  }
+  if(!is.list(toCompare[[1]])){
+    if(is.null(algoNames))
+      algoNames="unknown"
+    toCompareDF <-   makeDataFrame(toCompare,algoNames)
+  }
 
-    else{
-      if(is.null(algoNames))
-        algoNames=paste0("unknown-",1:length(toCompare))
-      toCompareDF <-   mapply(makeDataFrame,toCompare,algoNames,SIMPLIFY = F)
-      toCompareDF <-  bind_rows(toCompareDF, .id = "column_label")
-      toCompareDF <- toCompareDF[,2:ncol(toCompareDF)]
-    }
-    # toCompareDF$value  = as.numeric(levels(toCompareDF$value))[toCompareDF$value]
-    toCompareDF$variable  = factor(toCompareDF$variable,levels = min(as.numeric(toCompareDF$variable)):max(as.numeric(toCompareDF$variable)))
-    toCompBest$variable  = factor(toCompBest$variable,levels = min(as.numeric(toCompBest$variable)):max(as.numeric(toCompBest$variable)))
+  else{
+    if(is.null(algoNames))
+      algoNames=paste0("unknown-",1:length(toCompare))
+    toCompareDF <-   mapply(makeDataFrame,toCompare,algoNames,SIMPLIFY = F)
+    toCompareDF <-  bind_rows(toCompareDF, .id = "column_label")
+    toCompareDF <- toCompareDF[,2:ncol(toCompareDF)]
+  }
+  # toCompareDF$value  = as.numeric(levels(toCompareDF$value))[toCompareDF$value]
+  toCompareDF$variable  = factor(toCompareDF$variable,levels = min(as.numeric(toCompareDF$variable)):max(as.numeric(toCompareDF$variable)))
+  toCompBest$variable  = factor(toCompBest$variable,levels = min(as.numeric(toCompBest$variable)):max(as.numeric(toCompBest$variable)))
 
-    toCompareDF$algoName  = as.factor(toCompareDF$algoName)
-    # ordertoCompareDF=order(levels(toCompareDF$variable) %>% as.numeric())
-    # levels(toCompBest$variable) = levels(toCompareDF$variable)[order(levels(toCompareDF$variable) %>% as.numeric())]
-    # levels(toCompareDF$variable) = levels(toCompareDF$variable)[order(levels(toCompareDF$variable) %>% as.numeric())]
-    # toCompareDF$variable = match(toCompareDF$variable,ordertoCompareDF)
-    # toCompBest$variable =  match(toCompBest$variable,ordertoCompareDF)
+  toCompareDF$algoName  = as.factor(toCompareDF$algoName)
+  # ordertoCompareDF=order(levels(toCompareDF$variable) %>% as.numeric())
+  # levels(toCompBest$variable) = levels(toCompareDF$variable)[order(levels(toCompareDF$variable) %>% as.numeric())]
+  # levels(toCompareDF$variable) = levels(toCompareDF$variable)[order(levels(toCompareDF$variable) %>% as.numeric())]
+  # toCompareDF$variable = match(toCompareDF$variable,ordertoCompareDF)
+  # toCompBest$variable =  match(toCompBest$variable,ordertoCompareDF)
 
 
-if(length(algoNames)>1)
+  if(length(algoNames)>1)
     g <- toCompareDF %>%
-      ggplot( aes(x=value, fill=algoName)) +
-      geom_histogram(  alpha=0.6, position = 'identity') +
-      labs(fill="") +
-      facet_wrap(~variable, scales="free")+
-      geom_vline(data=toCompBest,aes(xintercept=toCompBest$value), linetype="dashed", color = "black") +
-      geom_blank(aes(x = xmin)) +
-      geom_blank(aes(x = xmax))+
-      theme_minimal()+
-      theme(legend.position = 'top')+
-      ggtitle("Best found solutions",subtitle = "Dotted black line indicates the optimum value")
-else
+    ggplot( aes(x=value, fill=algoName)) +
+    geom_histogram(  alpha=0.6, position = 'identity') +
+    labs(fill="") +
+    facet_wrap(~variable, scales="free")+
+    geom_vline(data=toCompBest,aes(xintercept=toCompBest$value), linetype="dashed", color = "black") +
+    geom_blank(aes(x = xmin)) +
+    geom_blank(aes(x = xmax))+
+    theme_minimal()+
+    theme(legend.position = 'top')+
+    ggtitle("Best found solutions",subtitle = "Dotted black line indicates the optimum value")
+  else
 
 
 
@@ -183,10 +183,10 @@ else
                              geom_blank(aes(x = xmax))+
                              theme_minimal()+
                              theme(legend.position = 'none')+
-                              ggtitle("Best found solutions",subtitle = "Dotted black line indicates the optimum value")
+                             ggtitle("Best found solutions",subtitle = "Dotted black line indicates the optimum value")
     )
-    if(printIt)
-      ggsave(paste0(path,"/opt-gen-",generations,".pdf"), width = 40, height = 20, units = "cm",g)
+  if(printIt)
+    ggsave(paste0(path,"/opt-gen-",generations,".pdf"), width = 40, height = 20, units = "cm",g)
 
 
   return(g)
@@ -195,15 +195,15 @@ PlotXBest<- function(toCompare, generations="post",path,printIt,subpath="/opt-ge
 
   if(!is.list(toCompare[[1]])){
     if(is.list(toCompare)){
-    toCompare <- sapply(toCompare, function(x){
+      toCompare <- sapply(toCompare, function(x){
 
-      out= rep(NA, length(feature))
-      out[x[,"feature"]]=x[,"value"]
-      out
-    }
+        out= rep(NA, length(feature))
+        out[x[,"feature"]]=x[,"value"]
+        out
+      }
 
-    )
-    toCompare = t(toCompare)
+      )
+      toCompare = t(toCompare)
     }
     if(is.null(evaluations))
       evaluations=1:nrow(toCompare)
@@ -221,7 +221,7 @@ PlotXBest<- function(toCompare, generations="post",path,printIt,subpath="/opt-ge
 
     ranges  <- sapply(feature, function(x) return(c(max(x$bound()),min(x$bound()))),simplify = T)
     if(!is.null(variablesOrder))
-    ranges = ranges[,variablesOrder]
+      ranges = ranges[,variablesOrder]
 
     toCompareDF =toCompareDF[!is.na(toCompareDF$value),]
     toCompareDF$xmin=ranges[1,toCompareDF$variable]
@@ -231,18 +231,18 @@ PlotXBest<- function(toCompare, generations="post",path,printIt,subpath="/opt-ge
 
 
     if(is.null(types))
-    g <- suppressWarnings( ggplot(toCompareDF,aes(x= evaluations,y=value,color=variable))  +geom_point()+
-                             geom_hline(data=toCompBest,aes(yintercept=toCompBest$value), linetype="dashed", color = "black") +
-                             facet_wrap(~variable, scales="free_y")+
+      g <- suppressWarnings( ggplot(toCompareDF,aes(x= evaluations,y=value,color=variable))  +geom_point()+
+                               geom_hline(data=toCompBest,aes(yintercept=toCompBest$value), linetype="dashed", color = "black") +
+                               facet_wrap(~variable, scales="free_y")+
 
-                             geom_blank(aes(y = xmin)) +
-                             geom_blank(aes(y = xmax))+
-                             theme_minimal()+
-                             theme(legend.position = 'none', axis.text.x = element_text(angle = 30, hjust = 1)) +
-                            scale_x_continuous( labels = scales::scientific )+xlab("Evaluations")+
+                               geom_blank(aes(y = xmin)) +
+                               geom_blank(aes(y = xmax))+
+                               theme_minimal()+
+                               theme(legend.position = 'none', axis.text.x = element_text(angle = 30, hjust = 1)) +
+                               scale_x_continuous( labels = scales::scientific )+xlab("Evaluations")+
 
-                            ggtitle("Best found solutions history",subtitle = "Dotted black line indicates the optimum value")
-    )
+                               ggtitle("Best found solutions history",subtitle = "Dotted black line indicates the optimum value")
+      )
     else
       g <- suppressWarnings( ggplot(toCompareDF,aes(x= evaluations,y=value,color=types))  +geom_point()+
                                geom_hline(data=toCompBest,aes(yintercept=toCompBest$value), linetype="dashed", color = "black") +
@@ -285,3 +285,32 @@ saveMorePlot <- function(g=NULL,fileName=NULL,paper="a4r", width = 10.521, heigh
   dev.off()
 }
 
+plotSummary <- function(summary){
+  summary$improved <- c(TRUE,summary$yBest[2:length(summary$yBest)] < summary$yBest[1:(length(summary$yBest)-1)])
+  ggplot(summary,aes(x=evaluations,y=yBest,color=improved))+geom_point()+ggtitle(summary$algoName,subtitle =summary$problemName)+
+    scale_color_manual(name = "Improved from previous genereation",values=c("firebrick2", "green3"))+theme_minimal()+ theme(legend.position = "top")
+}
+plot.SCGAClass <- function(result){
+  p=NULL
+  p[[1]]<- plotSummary(result$summary)
+  if(!is.null(result$summariesPop))
+    p = append(p,sapply(result$summariesPop, plotSummary,simplify = F))
+  return(p)
+}
+print.SCGAClass <- function(result){
+  al <- c(
+    paste("Problem solved =", result$control$problemName )                                        ,
+    paste("Aglorithm used =", result$control$algoName )                                           ,
+    paste("Seed =", result$control$seed )                                                         ,
+    paste("localOptimisation =",result$control$localOptGenerations<result$control$maxGenerations ),
+    paste("Maximum number of function evaluations =", result$control$maxEvaluations )             ,
+    paste("Actual function evaluations =", max(result$evaluations) )                              ,
+    paste("ybest =", result$ybest )                                                               ,
+    paste("xbest =")
+    # prmatrix(result$xbest,quote=FALSE)
+
+  )
+  al=cbind(StrAlign(al, sep="="))
+  sapply(al, function(x)cat(x,"\n"))
+  print(result$xbest,quote=FALSE)
+}

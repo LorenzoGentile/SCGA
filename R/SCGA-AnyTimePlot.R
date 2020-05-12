@@ -11,14 +11,19 @@
 #' @param elitism numeric. Number of candidates to preserve to the next population. Default is size / 10
 #' @param evaluatePopDF function. See \code{\link{evaluatePopDF}}
 
-anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,
+anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,retPlotDf=F,
                     useMinMax = T, confidenceInterval = c(0.25,0.75),plotDF=NULL,funSample=F,excludeValueHigher=Inf, themePosX =.8,themePosY =.9,errorBar=F )
 {
-  retPlotDf=F
+
+
   if(is.null(plotDF)){
-    retPlotDf=T
+
     requireNamespace("ggplot2")
+
     dfNames <- c("algoName", "seed", "iteration", "iterBest")
+
+    if(!is.null(data$yBest))       data$iterBest <- data$yBest
+    if(!is.null(data$evaluations)) data$iteration <- data$evaluations
     if (!all(dfNames %in% names(data))) {
       stop("Wrong df names were provided")
     }
@@ -84,7 +89,10 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,
 
   h <- h+ theme_minimal()+xlab("Evaluations")+ylab("Objective function")+ggtitle("Best found solution history ")+theme(text = element_text(size=20),
                                                                                                                        legend.position = c(themePosX, themePosY)
+
   )
+
+  if(!is.null(data$problemName)) h <- h + labs(title=data$problemName[1],subtitle = "Best found solution history ")
   if(retPlotDf)
     return(list(plot=h,data=plotDF))
   else
@@ -132,7 +140,7 @@ functionReduce <- function(data,sampling=100){
     df=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=name[1],seed=name[2]))
     return(df)
   }
-  browser()
+
   df=mapply(reduce, dataDivided,nomi,SIMPLIFY = F)
   df = df[!sapply(df, is.null)]
   df=dplyr::bind_rows(df, .id = "column_label")

@@ -1,5 +1,7 @@
 #' This function returns the default controls and other useful variables.
 #'  Control is a list of the settings:
+#' @param backup boolean. Save key objects
+#' @param backupInterval numeric. Backup frequency
 #' @param convergence Stopping criterion: absolute difference between the current best and
 #' the known minimum
 #' @param cpus numeric. indicatig number of cores over which parallelise
@@ -130,7 +132,7 @@ Initialise <- function(control = list(),...) {
   nVar[3]   <- sum(getValues(x=feat, name = "type", Unique = F) == "categorical")
   nVar[4]   <- sum(getValues(x=feat, name = "type", Unique = F) == "repeater")
 
-  result    <- OptimizerClass(job=control$job,resumeFrom=control$resumeFrom,control)                     # create a result object of class result
+  result    <- OptimizerClass(resumeFrom=control$resumeFrom,control)                     # create a result object of class result
 
   conditions <-  initializeConditions()
 
@@ -235,6 +237,7 @@ createControl <- function(control) {
     keep                    = NULL,                     # vector of fields that don't have to be touched
     #localOptGenerations    = maxGenerations
     localOptimiser          = LocalOptimisation,
+    localMethod             = "L-BFGS-B",
     maxEvaluations          = NULL,
     maxGenerations          = NULL,
     multiPopulation         = FALSE,

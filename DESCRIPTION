@@ -20,4 +20,5 @@ Imports:
     dplyr,
     bazar,
     plotly
+    DescTools
 RoxygenNote: 6.1.1

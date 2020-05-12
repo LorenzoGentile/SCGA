@@ -1,3 +1,10 @@
+#' This function returns the default controls and other useful variables.
+#'  Control is a list of the settings:
+#' @param bounds list. Internal objects are vectors names "lower" and "upper".
+#' @param dependence vector. default is rep(NA, length(bounds$lower))
+#' @param label vector. default is 1:length(bounds$lower)
+#' @param types vector. default is rep("numeric", length(bounds$lower))
+#' @param others vector or list of the same length as bounds$lower
 CreateFeature <- function( bounds,dependence=NULL, label=NULL,types=NULL,others = NULL,...){
 
   if(!is.null(bounds$lower) && !is.null(bounds$upper)){
