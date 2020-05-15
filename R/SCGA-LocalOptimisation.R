@@ -1,5 +1,4 @@
 LocalOptimisation <- function(control,feature,newPop,y,active,evaluations,sigma,result,generations,...){
-
   if(is.null(control$varForLocalOpt))                                                                    # Choose feature to use in the local optimisation
     RealOptVar=which(getValues(x=feature, name = "type", Unique = F) == "numeric")                          # Choose feature to use in the local optimisation
   else                                                                                                   # Choose feature to use in the local optimisation
@@ -20,24 +19,43 @@ LocalOptimisation <- function(control,feature,newPop,y,active,evaluations,sigma,
 
   objLocal<- function(x,...){
     X=x0
+
     xScaled= x*(boundsLocalOpt[,2]-boundsLocalOpt[,1])+boundsLocalOpt[,1]
+    print(x)
     X[localActive,"value"] = xScaled
-    control$Fun(X,...)/y0
+
+    out <- try(control$localFun(X,...)/y0)
+    if(is.character(out))
+      out <- 1
+    return(out)
 
   }
-
-
 
 
   # res=optimx::optimx(par=startPoint,objLocal,method = c("L-BFGS-B","CG"),lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),itnmax=1000,...)
   # newPop[[1]][localActive,"value"]=res$pn*(boundsLocalOpt[,2]-boundsLocalOpt[,1])+boundsLocalOpt[,1]
   # y[[1]]=res$value*y0
   # res$fevals
-  res <- optim(par=startPoint,objLocal,method = control$localMethod,lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),control=list(trace=0),...)
 
-  newPop[[1]][localActive,"value"] <- res$par*(boundsLocalOpt[,2]-boundsLocalOpt[,1])+boundsLocalOpt[,1]
+  if(control$differentiable){
+    res <- optim(par=startPoint,objLocal,method = control$localMethod,lower = rep(0,length(localActive)),
+                 upper = rep(1,length(localActive)),control=list(trace=0),...)
+
+
+    evaluations                      <- evaluations +  res$counts[[1]] + res$counts[[2]] * 2 * length(res$par)
+  }
+  else{
+    res <- nloptr::bobyqa(startPoint,objLocal,lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),
+                          control = list(stopval=control$target, xtol_rel= control$convergence,
+                                         maxeval=control$maxEvaluations-evaluations),...)
+
+    evaluations                      <- evaluations +  res$iter
+
+  }
+
   y[[1]]                           <- res$value*y0
-  evaluations                      <- evaluations +  res$counts[[1]] + res$counts[[2]] * 2 * length(res$par)
+  newPop[[1]][localActive,"value"] <- res$par*(boundsLocalOpt[,2]-boundsLocalOpt[,1])+boundsLocalOpt[,1]
+
 
 
   if(evaluations> control$maxEvaluations){

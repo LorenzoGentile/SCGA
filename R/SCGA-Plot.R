@@ -106,7 +106,9 @@ PlotPopulation <- function(toCompare, generations,path,printIt,subpath="/opt-gen
   }
   return(g)
 }
-PlotPopulationBest <- function(toCompare, generations,path,printIt,subpath="/opt-gen-",toCompBest,algoNames=NULL){
+
+
+PlotPopulationBest <- function(toCompare, generations="unkwonw",path,printIt=F,subpath="/opt-gen-",toCompBest,algoNames=NULL,feature){
 
 
   makeDataFrame <- function(toCompare,algo){
@@ -125,14 +127,14 @@ PlotPopulationBest <- function(toCompare, generations,path,printIt,subpath="/opt
       toCompareDF = rbind(toCompareDF,cbind(toCompare[,i],i,algo))
     }
 
-    colnames(toCompareDF) = c("value", "variable","algoName")
-    toCompareDF           = as.data.frame(toCompareDF)
-    toCompareDF$value  = as.numeric(levels(toCompareDF$value))[toCompareDF$value]
-    toCompareDF$variable  = as.factor(toCompareDF$variable)
-    toCompareDF$algoName  = as.factor(toCompareDF$algoName)
-    ranges  <- sapply(feature, function(x) return(c(max(x$bound()),min(x$bound()))),simplify = T)
-    toCompareDF$xmin=ranges[1,toCompareDF$variable]
-    toCompareDF$xmax=ranges[2,toCompareDF$variable]
+    colnames(toCompareDF)  <- c("value", "variable","algoName")
+    toCompareDF            <- as.data.frame(toCompareDF)
+    toCompareDF$value      <- as.numeric(levels(toCompareDF$value))[toCompareDF$value]
+    toCompareDF$variable   <- as.factor(toCompareDF$variable)
+    toCompareDF$algoName   <- as.factor(toCompareDF$algoName)
+    ranges                 <- sapply(feature, function(x) return(c(max(x$bound()),min(x$bound()))),simplify = T)
+    toCompareDF$xmin       <- ranges[1,toCompareDF$variable]
+    toCompareDF$xmax       <- ranges[2,toCompareDF$variable]
     toCompareDF
   }
   if(!is.list(toCompare[[1]])){
@@ -187,7 +189,6 @@ PlotPopulationBest <- function(toCompare, generations,path,printIt,subpath="/opt
     )
   if(printIt)
     ggsave(paste0(path,"/opt-gen-",generations,".pdf"), width = 40, height = 20, units = "cm",g)
-
 
   return(g)
 }
@@ -290,6 +291,37 @@ plotSummary <- function(summary){
   ggplot(summary,aes(x=evaluations,y=yBest,color=improved))+geom_point()+ggtitle(summary$algoName,subtitle =summary$problemName)+
     scale_color_manual(name = "Improved from previous genereation",values=c("firebrick2", "green3"))+theme_minimal()+ theme(legend.position = "top")
 }
+
+splitData <- function (results, groups = c("algoName","problemName") ){
+  data           <- sapply(results,function(x)x[[1]][["control"]][groups],simplify = F) %>% unlist() %>% matrix(ncol=2,byrow = T)
+  colnames(data) <- groups
+  data           <- as.data.frame(data)
+  data$entry     <- seq_along(results)
+  data           <- data %>%  group_by(algoName,problemName) %>% dplyr::group_split()
+  out            <- sapply(data, function(i)results[i$entry],simplify = F)
+  names(out) <- sapply(data, function(x) paste(sapply(groups,function(g)x[1,g][[1]]),collapse="-"))
+  out
+}
+plotXBestComparison <- function(results){
+  resultsSplitted <- splitData(results)
+  outXBest <- sapply(resultsSplitted, findBest,simplify = F)
+  mapply(function(i,name,resSplitted){PlotPopulationBest(i$allXBests,toCompBest=i$best,algoNames=name,feature = resSplitted[[1]][[1]]$control$feature)},outXBest,names(resultsSplitted),resultsSplitted)
+}
+findBest <- function(results){
+  yBestInd <- map_depth(results,"ybest",.depth = 2) %>% unlist%>% which.min()
+  xBests   <- sapply(results,function(x)x[[1]]$xbest)
+  best     <- results[[yBestInd]][[1]]$xbest
+
+  return(list(allXBests = xBests,best=best))
+}
+
+##%######################################################%##
+#                                                          #
+####            Default for class SCGAClass             ####
+#                                                          #
+##%######################################################%##
+
+
 plot.SCGAClass <- function(result){
   p=NULL
   p[[1]]<- plotSummary(result$summary)
@@ -310,7 +342,7 @@ print.SCGAClass <- function(result){
     # prmatrix(result$xbest,quote=FALSE)
 
   )
-  al=cbind(StrAlign(al, sep="="))
+  al=cbind(DescTools:::StrAlign(al, sep="="))
   sapply(al, function(x)cat(x,"\n"))
   print(result$xbest,quote=FALSE)
 }

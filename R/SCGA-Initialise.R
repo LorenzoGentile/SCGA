@@ -8,6 +8,7 @@
 #' @param creatCandFun function. See \code{\link{createCandidate}}
 #' @param createMutFun function. See \code{\link{createMutFun}}
 #' @param crossFun function. See \code{\link{crossFun}}
+#' @param differentiable "boolean". Used in case of local optimisation to deciding the default method for optim.
 #' @param dontChangeCross numeric vector. Feature number that not undergo to Crossover
 #' @param dontChangeMut numeric vector. Feature number that not undergo to Mutation
 #' @param elitism numeric. Number of candidates to preserve to the next population. Default is size / 10
@@ -18,6 +19,8 @@
 #' a vector of the same length repesententing the fitness. Default is Ranking fitness.
 #' @param maxStallGenerations numeric. Maximum number of iterations without improvements. If overcomen, the population is reinitialised.
 #' @param keep vector of characters. Additional columns in the matrix representing the candidate.
+#' @param localFunction function. Objective function of the local optimisation. Default is control$Fun. Is suggested to include constraints explicitely in control$localFunction
+#' @param localMethod "character". In case default localOptimiser is used (optim) is possible to specify the method. default is "L-BFGS-B" for differentiable and "Nelder-Mean" for not differentiable functions.
 #' @param localOptGenerations numeric. Maximum number of iterations without improvements. If overcomen,
 #'  a local optimisation on the numeric variables starts from the best solution found freezing the remaining genes. Then, the population is reinitialised.
 #' @param localOptimiser function. Function that performs the local optimisation. Default si optim. function. \code{\link{LocalOptimisationMatlab}} is also an option. It starts
@@ -226,6 +229,7 @@ createControl <- function(control) {
     createCandFun           = createCandidate,          # function used to create the candidate
     createMutFun            = NewValueMutation,     # function used in the mutation
     crossFun                = CrossOperation,
+    differentiable          = TRUE,
     dontChangeCross         = NULL,                     # feature that don' t have to be used in crossover and mutation
     dontChangeMut           = NULL,                      # feature that don' t have to be used in crossover and mutation
     elitism                 = NULL,
@@ -236,6 +240,7 @@ createControl <- function(control) {
     job                     = NULL,
     keep                    = NULL,                     # vector of fields that don't have to be touched
     #localOptGenerations    = maxGenerations
+    # localFun                = control$Fun
     localOptimiser          = LocalOptimisation,
     localMethod             = "L-BFGS-B",
     maxEvaluations          = NULL,
@@ -286,6 +291,7 @@ createControl <- function(control) {
   control              <- con
   if(is.null(control$resumeFrom))
     control$resumeFrom   <- paste(control$resumeFrom,Sys.time(),sep="-" )
+  if(is.null(control$localFun)) control$localFun <- control$Fun
   rm ("con")
   if(is.null(control$tournamentSize))
     control$tournamentSize = max(2,control$size / 10)
