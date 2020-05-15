@@ -33,7 +33,7 @@ LocalOptimisation <- function(control,feature,newPop,y,active,evaluations,sigma,
     X=x0
 
     xScaled= x*(boundsLocalOpt[,2]-boundsLocalOpt[,1])+boundsLocalOpt[,1]
-    print(x)
+
     X[localActive,"value"] = xScaled
 
     out <- try(localFun(X,...)/y0)
