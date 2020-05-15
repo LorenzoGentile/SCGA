@@ -19,12 +19,14 @@
 #' a vector of the same length repesententing the fitness. Default is Ranking fitness.
 #' @param maxStallGenerations numeric. Maximum number of iterations without improvements. If overcomen, the population is reinitialised.
 #' @param keep vector of characters. Additional columns in the matrix representing the candidate.
-#' @param localFunction function. Objective function of the local optimisation. Default is control$Fun. Is suggested to include constraints explicitely in control$localFunction
 #' @param localMethod "character". In case default localOptimiser is used (optim) is possible to specify the method. default is "L-BFGS-B" for differentiable and "Nelder-Mean" for not differentiable functions.
 #' @param localOptGenerations numeric. Maximum number of iterations without improvements. If overcomen,
 #'  a local optimisation on the numeric variables starts from the best solution found freezing the remaining genes. Then, the population is reinitialised.
 #' @param localOptimiser function. Function that performs the local optimisation. Default si optim. function. \code{\link{LocalOptimisationMatlab}} is also an option. It starts
 #' connection with matlab and uses fmnincon.
+#' @param makeLocalObjFunction function. Function that is used to make an objective function for the local optimisation.
+#' It can receive as input : control,feature,newPop,y,y0,active,evaluations,sigma,result,generations,startPoint...
+#' It is called before every local optimisation if the localOptimiser is the default function
 #' @param maxEvaluations numeric. Stopping criterion. Maximum number of evaluations allowed. If more stopping criterion are given, the more strict will be used.
 #' @param maxGenerations numeric. Stopping criterion. Maximum number of generations allowed. If more stopping criterion are given, the more strict will be used.
 #' @param multiPopulation Boolean. Use or not multiPopulation strategy. controls ar specified in multiPopControl
@@ -240,9 +242,9 @@ createControl <- function(control) {
     job                     = NULL,
     keep                    = NULL,                     # vector of fields that don't have to be touched
     #localOptGenerations    = maxGenerations
-    # localFun                = control$Fun
     localOptimiser          = LocalOptimisation,
     localMethod             = "L-BFGS-B",
+    makeLocalObjFunction    = NULL,
     maxEvaluations          = NULL,
     maxGenerations          = NULL,
     multiPopulation         = FALSE,
@@ -291,7 +293,6 @@ createControl <- function(control) {
   control              <- con
   if(is.null(control$resumeFrom))
     control$resumeFrom   <- paste(control$resumeFrom,Sys.time(),sep="-" )
-  if(is.null(control$localFun)) control$localFun <- control$Fun
   rm ("con")
   if(is.null(control$tournamentSize))
     control$tournamentSize = max(2,control$size / 10)

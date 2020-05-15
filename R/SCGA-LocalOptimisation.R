@@ -17,6 +17,18 @@ LocalOptimisation <- function(control,feature,newPop,y,active,evaluations,sigma,
   startPoint       <- x0[localActive,"value"] - boundsLocalOpt[,1]
   startPoint       <- startPoint /(boundsLocalOpt[,2]-boundsLocalOpt[,1])
 
+  if(is.null(control$makeLocalObjFunction))
+    localFun        <- control$Fun
+  else {
+    argsToPassNames <- formalArgs(control$makeLocalObjFunction)
+    extraArgs       <- sapply(argsToPassNames, function(x)identical(x,"..."))
+    argsToPass      <- mget(argsToPassNames[!extraArgs])
+    if(any(extraArgs))
+      argsToPass <- append(argsToPass,list(...))
+
+    localFun <- do.call(control$makeLocalObjFunction,argsToPass)
+  }
+
   objLocal<- function(x,...){
     X=x0
 
@@ -24,7 +36,7 @@ LocalOptimisation <- function(control,feature,newPop,y,active,evaluations,sigma,
     print(x)
     X[localActive,"value"] = xScaled
 
-    out <- try(control$localFun(X,...)/y0)
+    out <- try(localFun(X,...)/y0)
     if(is.character(out))
       out <- 1
     return(out)
