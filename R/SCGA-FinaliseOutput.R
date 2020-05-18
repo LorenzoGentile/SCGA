@@ -10,8 +10,6 @@ finaliseOutput <- function(env){
 
   result$summary             <- try(createSummary(control,result))
 
-  if(!is.character(result$summary)) class(result$summary) <-  c("summarySCGA",class(result$summary))
-
   if(control$constraint){
     result$xbest             <- bestFeasible$x
     result$ybest             <- bestFeasible$y
@@ -22,9 +20,9 @@ finaliseOutput <- function(env){
     result$ybest             <- result$ybesthistory[ind]
   }
 
-notNaInd = !is.na(result$ybesthistory)
-result$ybesthistory <- result$ybesthistory[notNaInd]
-result$xbesthistory <- result$xbesthistory[notNaInd]
+  notNaInd = !is.na(result$ybesthistory)
+  result$ybesthistory <- result$ybesthistory[notNaInd]
+  result$xbesthistory <- result$xbesthistory[notNaInd]
 
   return(result)
 }
@@ -39,10 +37,10 @@ createSummary <- function (control,result){
                                            problemName = control$problemName))
   if(control$constraint)
     summary                <- cbind(summary,
-                                      constBest  = result$consBesthistory[!is.na(result$ybesthistory)],
-                                      cRef       = control$cRef)
-# class(summary) = "SCGASummary"
-return(summary)
+                                    constBest  = result$consBesthistory[!is.na(result$ybesthistory)],
+                                    cRef       = control$cRef)
+  class(summary) <-  c("summarySCGA",class(summary))
+  return(summary)
 }
 
 
@@ -62,17 +60,17 @@ finaliseOutputMultiPop <- function(env){
 
 
   summariesMod <- try(sapply(1:length(result$summaries),function(generations){
-      if(generations==1)
-        return(result$summaries[[1]])
-      # y is all the summaries of the same generation
-      y=sapply(1:length(result$summaries[[generations]]), function(pop){
+    if(generations==1)
+      return(result$summaries[[1]])
+    # y is all the summaries of the same generation
+    y=sapply(1:length(result$summaries[[generations]]), function(pop){
 
-        result$summaries[[generations]][[pop]]$evaluations =  result$summaries[[generations]][[pop]]$evaluations + sum(sapply(seq(1,(generations-1)),function(jj)max(result$summaries[[jj]][[pop]]$evaluations)))
-        return(result$summaries[[generations]][[pop]])
-      },simplify = F)
-      return(y)},simplify = F))
+      result$summaries[[generations]][[pop]]$evaluations =  result$summaries[[generations]][[pop]]$evaluations + sum(sapply(seq(1,(generations-1)),function(jj)max(result$summaries[[jj]][[pop]]$evaluations)))
+      return(result$summaries[[generations]][[pop]])
+    },simplify = F)
+    return(y)},simplify = F))
 
-if(!is.character(summariesMod)) result$summaries <- summariesMod
+  if(!inherits(summariesMod,"try-error")) result$summaries <- summariesMod
 
 
   result$summariesPop <-  try(purrr:::transpose(result$summaries) %>% sapply(FUN=function(x) dplyr::bind_rows(x) ,simplify = F))
