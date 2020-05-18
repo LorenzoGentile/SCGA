@@ -7,27 +7,27 @@ localOptimisation <- function(env,...){
 
 
   active=1:length(feature)
-  LocalOptList                 <- control$localOptimiser(control,feat,newPop,y,active,evaluations,sigma,result,generations,...)
+  LocalOptList                             <- control$localOptimiser(control,feat,newPop,y,active,evaluations,sigma,result,generations,...)
 
-  newPop                       <- LocalOptList$newPop
-  evaluations                  <- LocalOptList$evaluations
-  y                            <- LocalOptList$y
-  result                       <- LocalOptList$result
+  newPop                                   <- LocalOptList$newPop
+  evaluations                              <- LocalOptList$evaluations
+  y                                        <- LocalOptList$y
+  result                                   <- LocalOptList$result
 
 
   result$ybesthistory[generations -1]      <- min( y )
 
-  result$xbesthistory[[generations-1]]   <- newPop[[1]]
+  result$xbesthistory[[generations-1]]     <- newPop[[1]]
 
-  stallRef                     <- Inf
-  result$localOpt[generations] <- TRUE
+  result$evaluations[generations-1]        <- evaluations
+
+  stallRef                                 <- Inf
+
+  result$localOpt[generations]             <- TRUE
 
   rm(LocalOptList)
 
-
-
-
-  initPopAndSigmaList          <- reinitialise(control,feature,LAPPLY)
+  initPopAndSigmaList                      <- reinitialise(mget(ls(),envir = environment()),...)
   list2env(initPopAndSigmaList,envir=environment())
   rm(initPopAndSigmaList)
 
@@ -37,8 +37,11 @@ localOptimisation <- function(env,...){
 
 
 
-reinitialise <- function(control,feature,LAPPLY){
-  initPopAndSigmaList              <- suppressWarnings( InitPopAndSigma(control=control,feature,LAPPLY))
+reinitialise <- function(env,...){
+
+  list2env(env,envir = environment())
+  rm(env)
+  initPopAndSigmaList              <- suppressWarnings( InitPopAndSigma(control=control,feature,LAPPLY,...))
   initPopAndSigmaList$stallingFlag <- TRUE
   initPopAndSigmaList$stalling     <- 0
   control$toEval                   <- 1:control$size

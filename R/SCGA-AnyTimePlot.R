@@ -98,7 +98,7 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,retPlotDf
   else
     return(h)
 }
-sampleData=function(iter,iterBest,iteration){iterBest[which.min(abs(iteration-iter))]}
+
 
 functionReduce <- function(data){
 
@@ -150,14 +150,19 @@ functionReduce <- function(data,sampling=100){
   df$iterBest  <- df$iterBest %>% as.numeric
   return(df)
 }
-functionReduce <- function(data,sampling=100){
+
+
+
+functionReduce <- function(data,sampling=1000){
+
 data=data[!is.na(data$iteration),]
-  df=list(NA,length(unique(data$algoName))*length(unique(data$seed)))
-  ind=1
-  evals=seq(1,5e4,100)
+  df   =list(NA,length(unique(data$algoName))*length(unique(data$seed)))
+  ind  =1
+  evals=seq(min(data$iteration),max(data$iteration),length.out =  sampling)
+
   for (algo in unique(data$algoName)){
     subData <- data %>% filter(algoName==algo)
-    evals=seq(min(subData$iteration),max(subData$iteration),length.out =  sampling)
+    # evals=seq(min(subData$iteration),max(subData$iteration),length.out =  sampling)
     for (replica in  unique(subData$seed)) {
 
       subsubData <- subData %>% filter(seed==replica)
@@ -175,4 +180,23 @@ data=data[!is.na(data$iteration),]
   df$iteration <- df$iteration %>% as.numeric
   df$iterBest <-  df$iterBest %>% as.numeric
   return(df)
+}
+sampleData=function(iter,iterBest,iteration){iterBest[which.min(abs(iteration-iter))]}
+functionReduce <- function(data,sampling=1000){
+  data=data[!is.na(data$iteration),]
+  # data  <- data %>% filter(iteration<200)
+  evals <- seq(min(data$iteration),max(data$iteration),length.out =  sampling)
+  data  <- data %>% group_by(seed,algoName) %>% dplyr:::group_split()
+  data  <- sapply(data,newValues,evals,simplify = F)
+
+  bind_rows(data)
+
+}
+newValues <- function(dataNew,evals){
+  iterBest <- sapply(evals, sampleData,dataNew$iterBest,dataNew$iteration)
+  dataOut  <- dataNew[1,setdiff(colnames(dataNew),c("iterBest","iteration"))]
+  dataOut[1:length(iterBest),] <-  dataOut[1,]
+  dataOut$iterBest <- iterBest
+  dataOut$iteration <- evals
+  dataOut
 }

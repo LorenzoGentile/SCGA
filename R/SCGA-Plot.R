@@ -286,7 +286,7 @@ saveMorePlot <- function(g=NULL,fileName=NULL,paper="a4r", width = 10.521, heigh
   dev.off()
 }
 
-plotSummary <- function(summary){
+plot.summarySCGA <- function(summary){
   summary$improved <- c(TRUE,summary$yBest[2:length(summary$yBest)] < summary$yBest[1:(length(summary$yBest)-1)])
   ggplot(summary,aes(x=evaluations,y=yBest,color=improved))+geom_point()+ggtitle(summary$algoName,subtitle =summary$problemName)+
     scale_color_manual(name = "Improved from previous genereation",values=c("firebrick2", "green3"))+theme_minimal()+ theme(legend.position = "top")
@@ -324,9 +324,9 @@ findBest <- function(results){
 
 plot.SCGAClass <- function(result){
   p=NULL
-  p[[1]]<- plotSummary(result$summary)
+  p[[1]]<- plot.summarySCGA(result$summary)
   if(!is.null(result$summariesPop))
-    p = append(p,sapply(result$summariesPop, plotSummary,simplify = F))
+    p = append(p,sapply(result$summariesPop, plot.summarySCGA,simplify = F))
   return(p)
 }
 print.SCGAClass <- function(result){
