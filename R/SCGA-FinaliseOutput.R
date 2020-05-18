@@ -7,8 +7,10 @@ finaliseOutput <- function(env){
   result$lastX               <- x
   result$newPop              <- newPop
   result$sigma0              <- sigma0
+
   result$summary             <- try(createSummary(control,result))
 
+  if(!is.character(result$summary)) class(result$summary) <-  c("summarySCGA",class(result$summary))
 
   if(control$constraint){
     result$xbest             <- bestFeasible$x
@@ -19,6 +21,7 @@ finaliseOutput <- function(env){
     result$xbest             <- result$xbesthistory[[ind]]
     result$ybest             <- result$ybesthistory[ind]
   }
+
 notNaInd = !is.na(result$ybesthistory)
 result$ybesthistory <- result$ybesthistory[notNaInd]
 result$xbesthistory <- result$xbesthistory[notNaInd]
@@ -54,8 +57,8 @@ finaliseOutputMultiPop <- function(env){
   result$newPop              <- purrr::map(out,"newPop")
   result$sigma0              <- purrr::map(out,"sigma0")
 
-  result$ybesthistoryPop <- purrr:::transpose(result$ybesthistoryPop) %>% sapply(FUN=function(x)unlist(x,recursive = F),simplify = F)
-  result$xbesthistoryPop <- purrr:::transpose(result$xbesthistoryPop) %>% sapply(FUN=function(x)unlist(x,recursive = F),simplify = F)
+  result$ybesthistoryPop     <- purrr:::transpose(result$ybesthistoryPop) %>% sapply(FUN=function(x)unlist(x,recursive = F),simplify = F)
+  result$xbesthistoryPop     <- purrr:::transpose(result$xbesthistoryPop) %>% sapply(FUN=function(x)unlist(x,recursive = F),simplify = F)
 
 
   summariesMod <- try(sapply(1:length(result$summaries),function(generations){
