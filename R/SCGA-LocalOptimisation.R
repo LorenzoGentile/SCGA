@@ -37,17 +37,11 @@ LocalOptimisation <- function(control,feature,newPop,y,active,evaluations,sigma,
     X[localActive,"value"] = xScaled
 
     out <- try(localFun(X,...)/y0)
-    if(is.character(out))
+    if(inherits(out,"try-error"))
       out <- 1
     return(out)
 
   }
-
-
-  # res=optimx::optimx(par=startPoint,objLocal,method = c("L-BFGS-B","CG"),lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),itnmax=1000,...)
-  # newPop[[1]][localActive,"value"]=res$pn*(boundsLocalOpt[,2]-boundsLocalOpt[,1])+boundsLocalOpt[,1]
-  # y[[1]]=res$value*y0
-  # res$fevals
 
   if(control$differentiable){
     res <- optim(par=startPoint,objLocal,method = control$localMethod,lower = rep(0,length(localActive)),
@@ -57,9 +51,15 @@ LocalOptimisation <- function(control,feature,newPop,y,active,evaluations,sigma,
     evaluations                      <- evaluations +  res$counts[[1]] + res$counts[[2]] * 2 * length(res$par)
   }
   else{
-    res <- nloptr::bobyqa(startPoint,objLocal,lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),
-                          control = list(stopval=control$target, xtol_rel= control$convergence,
-                                         maxeval=control$maxEvaluations-evaluations),...)
+    if(is.null(control$hin))
+      res <- nloptr::bobyqa(startPoint,objLocal,lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),
+                            control = list(stopval=control$target, xtol_rel= control$convergence,
+                                           maxeval=control$maxEvaluations-evaluations),...)
+    else
+      res <- nloptr::bobyqa(startPoint,objLocal,lower = rep(0,length(localActive)),upper = rep(1,length(localActive)),
+                            hin = control$hin,control = list(stopval=control$target, xtol_rel= control$convergence,
+                                                             maxeval=control$maxEvaluations-evaluations),...)
+
 
     evaluations                      <- evaluations +  res$iter
 
