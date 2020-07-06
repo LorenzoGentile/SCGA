@@ -31,7 +31,7 @@ createPopulationLHD <- function(feature,size,createCandidate=createCandidateLHD,
   #   ____________________________________________________________________________
   #   create the first population using the DOE for the indipendent genes     ####
 
-  independentLhd <- firstLHD[,notdependent]
+  independentLhd <- firstLHD[,notdependent,drop=F]
   seeds          <- floor(runif(size,min=0,max=1e6))
 
   pop <- sapply(seq_len(size), function(i) createCandidateLHD(X = seeds[i],independentLhd =independentLhd[i,], notdependent=notdependent,
@@ -54,7 +54,7 @@ createPopulationLHD <- function(feature,size,createCandidate=createCandidateLHD,
   lhds <- sapply(unique(counts$x), function(i){
 
     involved <- counts$ix[counts$x==i]
-    if(i==size) lhd <- firstLHD[,involved]
+    if(i==size) lhd <- firstLHD[,involved,drop=F]
     else if(i==0)return(list(lhd=NULL,involved=NULL))
     else{
     bounds   <- sapply(feature[involved],getBounds )

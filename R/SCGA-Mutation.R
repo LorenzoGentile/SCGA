@@ -1,5 +1,5 @@
 Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nVar,sigma,sigma0,generation,oldPopulation){
-  # browser()
+
   allMutated <- MutPool <- which((sample( c(0, 1),   prob = c((1 - mutRate), mutRate),
                                           size = control$size-control$elitism,   replace = TRUE ) == 1)) + control$elitism
   toCompare= append(newPop,oldPopulation)

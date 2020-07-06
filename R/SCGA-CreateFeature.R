@@ -68,6 +68,7 @@ TreatOthers <- function(others,dim){
 }
 
 CreateFeat<- function(bounds,dependence,label,types, others){
+
   feature <- list(
     bound                 = CreateBoundsInt(bounds),
     dependent             = CreateDependent(dependence),

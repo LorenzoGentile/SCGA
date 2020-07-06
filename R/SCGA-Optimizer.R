@@ -37,9 +37,9 @@ SCGA <- function(control = list(),extraParam=NULL,moreArgsMapply=NULL,...) {
 
   ########## if exists exists a resume File load it and continue the optimisation from that
 
-  if( file.exists(paste0( control$resumeFrom,".RData" )) && control$resume){
+  if( file.exists(paste0( control$resumeFrom,".rds" )) && control$resume){
 
-    backList <- RestartFromBackup(control$resumeFrom,newPop)
+    backList <- RestartFromBackup(control$resumeFrom,newPop,control)
     list2env(backList,envir = environment())
     rm(backList)
   }
@@ -121,7 +121,6 @@ if(!is.null(control$budgetTot)) budget=control$budgetTot
     ##  ............................................................................
     ##  print on screen
 
-    if(control$printIter){
 
       result <- Output(best=best,bestRel=bestRel, control,consBest=consBest,
                        consBestRel=consBestRel,
@@ -130,8 +129,9 @@ if(!is.null(control$budgetTot)) budget=control$budgetTot
                        generations=generations,identicX=identicX,
                        media = mean(y, na.rm = TRUE), NAs=NAs,newPop = newPop,
                        result=result, y=yForResults,x=x,sigma=sigma,
-                       sigma0=sigma0,stalling=stalling, pb=pb,cRef=control$cRef)
-    }
+                       sigma0=sigma0,stalling=stalling, pb=pb,cRef=control$cRef,
+                       backupEnv=mget(ls(),envir = environment()))
+
 
 
     ##  ............................................................................

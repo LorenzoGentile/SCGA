@@ -5,3 +5,5 @@
 .gitignore
 .Rbuildignore
 .DS_Store
+
+*.rds

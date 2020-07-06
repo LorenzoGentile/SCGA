@@ -81,7 +81,6 @@ Initialise <- function(control = list(),...) {
   constraint    <- constraintForResults       <- NULL
   feature                                     <- control$feature                                              # Initialise #
   forceEvaluation                             <- FALSE
-  Fun                                         = control$Fun                                                   # Initialise #
   stallinFlag                                 <- FALSE                                                        # Initialise #
   media                                       <- NULL
   stalling <-  ws <- evaluations              <- 0
@@ -117,7 +116,7 @@ Initialise <- function(control = list(),...) {
     cpus    <- min(detectCores() - 1, control$cpus, na.rm = TRUE)                                            # Cluster Settings
     cl      <- makeCluster(cpus, type = cltype)                                                              # Cluster Settings
     # Cluster Settings
-    clusterExport(cl, varlist = "Fun", envir = environment())                                                # Cluster Settings
+    clusterExport(cl, varlist = "control", envir = environment())                                                # Cluster Settings
     clusterEvalQ(cl, "bazar")                                                                                # Cluster Settings
     print(paste0("loaded cluster: - ",cpus," - nodes"))                                                      # Cluster Settings
   } else                                                                                                     # Cluster Settings
@@ -162,22 +161,8 @@ Initialise <- function(control = list(),...) {
   }
 
   ####### Ridefine objective function  ########
-
-  if(control$vectorized && control$vectorOnly )
-    evaluateFun <- function(x,...) Fun(x[1:length(x)][,"value"],...)
-
-  else if (control$vectorized && !control$vectorOnly )
-    evaluateFun <- function(x,...) Fun(x,...)
-
-  else if (!control$vectorized && !control$vectorOnly )
-    evaluateFun <- function(x,...) SAPPLY( X = x,Fun,...)
-
-  else if (!control$vectorized && control$vectorOnly )
-    evaluateFun <- function(x,...)  SAPPLY( X = x, function (x) Fun(x[,"value"]),...)
-
-
-
-  mutRate  <- control$mutRate
+  evaluateFun <- makeEvaluateFun(control)
+  mutRate     <- control$mutRate
 
   return(list(
     APPLY           = APPLY,
@@ -274,7 +259,7 @@ createControl <- function(control) {
     repairFun               = NULL,
     repairMutation          = NULL,
     resume                  = FALSE,
-    resumeFrom              = "anonimousFunction",
+    resumeFrom              = NULL,
     saveAll                 = FALSE,
     seed                    = sample(1e6, 1),
     selection               = selectpoolTournament,
@@ -292,7 +277,7 @@ createControl <- function(control) {
   con$repairFun        = control$repairFun
   control              <- con
   if(is.null(control$resumeFrom))
-    control$resumeFrom   <- paste(control$resumeFrom,Sys.time(),sep="-" )
+    control$resumeFrom   <- paste(control$problemName,control$algoName,Sys.time(),sep="-" )
   rm ("con")
   if(is.null(control$tournamentSize))
     control$tournamentSize = max(2,control$size / 10)
@@ -305,8 +290,8 @@ createControl <- function(control) {
     control$maxEvaluations <- min(control$maxEvaluations,control$size+(control$maxGenerations-1)*(control$size-control$elitism))
     cat("\n Both maxGenerations and maxEvaluations provided.The minimum will be used \n")
 
-    } else if(!is.null(control$maxGenerations) & is.null(control$maxEvaluations)){
-      control$maxEvaluations <- control$size + (control$maxGenerations-1)*(control$size-control$elitism)
+  } else if(!is.null(control$maxGenerations) & is.null(control$maxEvaluations)){
+    control$maxEvaluations <- control$size + (control$maxGenerations-1)*(control$size-control$elitism)
   } else if ( is.null(control$maxGenerations) & !is.null(control$maxEvaluations)){
     control$maxGenerations  <- 1 + (control$maxEvaluations - control$size) %/% length(control$toEval-control$elitism)
   } else if (is.null(control$maxGenerations) & is.null(control$maxEvaluations) )
@@ -356,7 +341,21 @@ createControl <- function(control) {
 
 initializeConditions <- function()list(mainLoop = c(budgetOver=FALSE,targetReached=FALSE),stalling=c(reinitialise=FALSE,localOptimisation=FALSE) )
 
+####### Ridefine objective function  ########
+makeEvaluateFun <- function(control){
+  if(control$vectorized && control$vectorOnly )
+    evaluateFun <- function(x,...) control$Fun(x[1:length(x)][,"value"],...)
 
+  else if (control$vectorized && !control$vectorOnly )
+    evaluateFun <- function(x,...) control$Fun(x,...)
+
+  else if (!control$vectorized && !control$vectorOnly )
+    evaluateFun <- function(x,...) SAPPLY( X = x,control$Fun,...)
+
+  else if (!control$vectorized && control$vectorOnly )
+    evaluateFun <- function(x,...)  SAPPLY( X = x, function (x) control$Fun(x[,"value"]),...)
+  return(evaluateFun)
+}
 
 
 

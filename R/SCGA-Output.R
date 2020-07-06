@@ -1,6 +1,6 @@
-Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,constList,evaluations,eval,fitness,generations,identicX,media, NAs, newPop,result, y,x,sigma,sigma0,stalling, pb,cRef=NULL){
+Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,constList,evaluations,eval,fitness,generations,identicX,media, NAs, newPop,result, y,x,sigma,sigma0,stalling, pb,cRef=NULL,backupEnv=NULL){
   # tictoc::toc()
-
+  if(control$printIter){
   cat("\014")
 
   if(control$constraint)
@@ -13,7 +13,7 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
              " | Mean = ", prettyNum(mean(y, na.rm = TRUE),digits=4),
              " | Stalling = ", stalling, "| NAs = ", NAs,"\n"))
 
-
+  }
 
   # pb$update(evaluations/control$maxEvaluations)
   # TODO : ERROR THAT HAS TO BE FIXED
@@ -22,16 +22,15 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
 
   ##  ............................................................................
   ##  backup
+
   if(control$backup){
     if(generations%%control$backupInterval==0){
-      back              <- result
-      back$newPop       <- newPop
-      back$summary      <- createSummary(control,result)
-      back$y            <- back$y[1:generations]
-      back$ybesthistory <- back$ybesthistory[1:generations]
-      back$xbesthistory <- back$xbesthistory[1:generations]
-      back$x            <- back$x[1:generations]
-      save("back",file  = paste0(control$resumeFrom,".RData"))
+      backupEnv$result       <- try(finaliseOutput(backupEnv))
+
+      backupEnv$result$summary      <- createSummary(backupEnv$control,backupEnv$result)
+
+      print( backupEnv$result$summary)
+      saveRDS(backupEnv,file  = paste0(control$resumeFrom,".rds"))
     }
 
   }

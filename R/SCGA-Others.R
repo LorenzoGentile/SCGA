@@ -17,30 +17,42 @@ analyseOperationPerformance <- function(operator,list,evaluateFun){
 
 progressBarCreate <- function(control)
   progress::progress_bar$new(total = control$maxEvaluations,format = "  optimising [:bar] :percent eta: :eta", clear = TRUE, width= 60)
-RestartFromBackup <- function(resumeFrom,newPop){             #Function still To be checked
-  load(paste0(resumeFrom,".RData" ))
-  result                   <- back
-  rm(back)
-  evaluations              <- result[["evaluations"]][(max(which(!is.na(result[["evaluations"]]))))-1]
-  ybesthistory             <- result[["ybesthistory"]]
-  xbesthistory             <- result[["xbesthistory"]]
-  yForResults              <- result[["yForResults"]]
-  y                        <- result[["y"]]
-  x                        <- result[["x"]]
-  plots                    <- result[["plots"]]
-  set.seed(result$control$seed)
-  resuming                 <-  T
-  if(result$control$saveAll){
-    y                        <-  y[[max(which(!is.na(ybesthistory)))]]
-    newPop                   <-  x[[max(which(!is.na(xbesthistory)))]]
-  } else
-    newPop[[1]]            <-  xbesthistory[[max(which(!is.na(xbesthistory)))]]
 
-  generations              <-  length(ybesthistory[!is.na(ybesthistory)])
-  # sigma0                 <- sigma[[1]]
-  env                      <- mget(ls(), envir = environment())
+RestartFromBackup <- function(resumeFrom,newPop,control){
 
-  return(env)
+  back               <- readRDS(paste0(resumeFrom,".rds" ))
+  back$result        <- finaliseOutput(back)
+  back$resumeFrom    <- resumeFrom
+  evaluations        <- back$result$evaluations[(max(which(!is.na(back$result$evaluations))))]
+
+  set.seed(back$control$seed)
+
+
+  if(back$control$saveAll){
+    back$resuming      <-  T
+    control$toEval     <-  NULL
+    back$y             <-  back$result$y[[max(which(!is.na( back$result$ybesthistory)))]]
+    back$newPop        <-  back$result$x[[max(which(!is.na( back$result$xbesthistory)))]]
+
+  } else{
+    control$toEval      <- seq(2,control$size)
+    back$newPop         <- newPop
+    back$newPop[[1]]    <- back$result$xbesthistory[[max(which(!is.na( back$result$ybesthistory)))]]
+    back$y              <- back$result$ybesthistory[[max(which(!is.na( back$result$ybesthistory)))]]
+  }
+
+
+  back$generations   <-  length(back$result$ybesthistory[!is.na(back$result$ybesthistory)])
+
+  back$control       <- control
+  back$evaluateFun   <- makeEvaluateFun(back$control)
+
+  back$conditions$mainLoop["budgetOver"]    <- evaluations > (control$maxEvaluations
+                                                              - control$size + control$elitism)
+
+  back$conditions$mainLoop["targetReached"] <- abs(back$result$ybest - control$target) <= control$convergence
+
+  return(back)
 
 }
 
@@ -390,7 +402,8 @@ calcCurrCref <- function(evaluations, maxEvalutions,pureFeasibility ,maxRelaxati
 
 checkIdentical <- function(newPop,toCompare,elitism){
   toMutate=NULL
-  toMutate = sapply(1:(length(newPop)-1), function(i){ any(sapply (toCompare[(i+1):length(toCompare)],function(toCompare ,newPop) {identical(toCompare[,-c(3,4)],newPop)},newPop[[i]][,-c(3,4)] ))})
+
+  toMutate = sapply(1:(length(newPop)), function(i){ any(sapply (toCompare[(i+1):length(toCompare)],function(toCompare ,newPop) {identical(toCompare[,-c(3,4)],newPop)},newPop[[i]][,-c(3,4)] ))})
   toMutate = which(toMutate)
   toMutate = toMutate[toMutate>elitism]
 
