@@ -25,12 +25,9 @@ Output <- function(best,bestRel=NULL, control,consBest=NULL,consBestRel=NULL,con
 
   if(control$backup){
     if(generations%%control$backupInterval==0){
-      backupEnv$result       <- try(finaliseOutput(backupEnv))
-
+      backupEnv$result              <- try(finaliseOutput(backupEnv))
       backupEnv$result$summary      <- createSummary(backupEnv$control,backupEnv$result)
-
-      print( backupEnv$result$summary)
-      saveRDS(backupEnv,file  = paste0(control$resumeFrom,".rds"))
+      saveRDS(backupEnv,file = paste0(control$resumeFrom,".rds"))
     }
 
   }
