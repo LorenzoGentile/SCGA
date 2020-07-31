@@ -12,10 +12,11 @@
 #' @param evaluatePopDF function. See \code{\link{evaluatePopDF}}
 
 anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,retPlotDf=F,
-                    useMinMax = T, confidenceInterval = c(0.25,0.75),plotDF=NULL,funSample=F,excludeValueHigher=Inf, themePosX =.8,themePosY =.9,errorBar=F )
+                    useMinMax = T, confidenceInterval = c(0.25,0.75),plotDF=NULL,funSample=F,excludeValueHigher=Inf,
+                    themePosX =.8,themePosY =.9,errorBar=F,scaleManual=F )
 {
 
-
+  cat("\nAnytime plot started\n")
   if(is.null(plotDF)){
 
     requireNamespace("ggplot2")
@@ -28,8 +29,11 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,retPlotDf
       stop("Wrong df names were provided")
     }
 
-    if(funSample)
+    if(funSample){
+      cat("Computing common values\n")
       data= functionReduce(data)
+    }
+
 
     toRemove=data %>% group_by(algoName,seed) %>%  filter( iteration==max(iteration)) %>% summarise(toRemove=iterBest>excludeValueHigher)
 
@@ -44,12 +48,17 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,retPlotDf
     if (is.null(confidenceInterval))
       plotDF <-  data %>% group_by(algoName,iteration) %>% mutate(mean=mean(iterBest))
 
-    else
+    else if(length(confidenceInterval)==2)
       plotDF <-  data %>% group_by(algoName,iteration) %>% mutate(mean=mean(iterBest),
                                                                   sd=sd(iterBest),
                                                                   min=quantile(iterBest,confidenceInterval[1]),
                                                                   max=quantile(iterBest,confidenceInterval[2])
       )
+    else
+      plotDF <-  data %>% group_by(algoName,iteration) %>% mutate(mean=quantile(iterBest,confidenceInterval[2]),
+                                                                  sd=sd(iterBest),
+                                                                  min=quantile(iterBest,confidenceInterval[1]),
+                                                                  max=quantile(iterBest,confidenceInterval[3]))
 
 
   }
@@ -77,6 +86,11 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,retPlotDf
     h <- h + scale_x_log10()
   }
   h <- h + coord_cartesian(ylim = yLim, xlim = xLim)
+
+
+  h <- h + labs(colour="Algorithm:",fill="Algorithm:")
+
+  if(scaleManual){
   h <- h + scale_colour_manual(name = "Algorithm:",
                                values = c("#0000FF" ,"#228B22", "#FF0000" ,"#000000", "#BF3EFF" ,"#FF8C00" ,"#00EEEE" ,"#FF1493" ,"#8B4500" ,"#00EE00" ,"#1C86EE", "#C1CDCD", "#EEC900",
                                           "#CD3700" ,"#FFBBFF" ,"#0000FF" ,"#228B22" ,"#FF0000",
@@ -87,6 +101,7 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,retPlotDf
                                         "#CD3700" ,"#FFBBFF" ,"#0000FF" ,"#228B22" ,"#FF0000",
                                         "#000000" ,"#BF3EFF" ,"#FF8C00", "#00EEEE" ,"#FF1493", "#8B4500", "#00EE00" ,"#1C86EE" ,"#C1CDCD" ,"#EEC900" ,"#CD3700", "#FFBBFF"))
 
+  }
   h <- h+ theme_minimal()+xlab("Evaluations")+ylab("Objective function")+ggtitle("Best found solution history ")+theme(text = element_text(size=20),
                                                                                                                        legend.position = c(themePosX, themePosY)
 
@@ -97,58 +112,6 @@ anyPlot <-function (data, yLim = NULL, xLim = NULL, ylog = F, xlog = F,retPlotDf
     return(list(plot=h,data=plotDF))
   else
     return(h)
-}
-
-
-functionReduce <- function(data){
-
-  df=list(NA,length(unique(data$algoName))*length(unique(data$seed)))
-  ind=1
-  evals=seq(1,5e4,100)
-  for (algo in unique(data$algoName)){
-    subData <- data %>% filter(algoName==algo)
-    for (replica in  unique(subData$seed)) {
-
-      subsubData <- subData %>% filter(seed==replica)
-
-      samp=sapply(evals, sampleData,subsubData$iterBest,subsubData$iteration)
-      df[[ind]]=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=algo,seed=replica))
-
-      ind=ind+1
-    }
-  }
-
-  df=dplyr::bind_rows(df, .id = "column_label")
-  df=df[,2:ncol(df)]
-
-  df$iteration <- as.numeric(levels(df$iteration))[df$iteration]
-  df$iterBest <-  df$iterBest %>% as.numeric
-  return(df)
-}
-functionReduce <- function(data,sampling=100){
-  dataDivided = split(data,interaction(data$algoName,data$seed))
-  dataDivided = dataDivided[!sapply(dataDivided, is.empty)]
-  nomi= names(dataDivided)
-  reduce <- function(data,nome){
-    if(any(is.na(data$iteration)))
-      return(NULL)
-    # browser()
-
-    name = unlist(strsplit(nome, split="\\."))
-    evals=seq(min(data$iteration),max(data$iteration),length.out =  sampling)
-    samp=sapply(evals,sampleData,data$iterBest,data$iteration)
-    df=as.data.frame(cbind(iterBest=samp,iteration=evals,algoName=name[1],seed=name[2]))
-    return(df)
-  }
-
-  df=mapply(reduce, dataDivided,nomi,SIMPLIFY = F)
-  df = df[!sapply(df, is.null)]
-  df=dplyr::bind_rows(df, .id = "column_label")
-  df=df[,2:ncol(df)]
-
-  df$iteration <- df$iteration %>% as.numeric
-  df$iterBest  <- df$iterBest %>% as.numeric
-  return(df)
 }
 
 

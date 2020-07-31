@@ -31,7 +31,7 @@ Mutation <- function(APPLY,ChangeMut,cl,control,feature,LAPPLY,mutRate,newPop,nV
 
       # }
     }
-
+ 
     if(control$updateSigma & attempts==1){
 
       ########## update tau

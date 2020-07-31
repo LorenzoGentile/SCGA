@@ -1,6 +1,7 @@
 MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
                        dontChange=dontChange, replicates=F,repairMut=NULL,
                        updateSigma,control,probability,...) {
+
   index       <- X
   x           <- pop
   back        <- x <- x[[index]]
@@ -40,6 +41,11 @@ MutationDF <- function(X,pop,feature,maxMuting=Inf,sigmas=sigma0,createFun,
 
     x.copy=x
     x <- mutateDepDF( x=x ,i=i,feature=feature,row=row,sigmas=sigmas,createFun,...)
+    if(!is.matrix(x)){
+      cNames      <- names(x)
+      x           <- matrix(x,nrow=1)
+      colnames(x) <- cNames
+    }
 
 
     if(any(is.na(x[,"value"]))){

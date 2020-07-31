@@ -99,7 +99,7 @@ if(!is.null(control$budgetTot)) budget=control$budgetTot
     #   ____________________________________________________________________________
     #   fitness assignment                                                      ####
 
-    fitnessList <- assignFitness(control,newPop,y)
+    fitnessList <- assignFitness(control,newPop,y,generations)
     list2env(fitnessList,envir = environment())
     rm(fitnessList)
 

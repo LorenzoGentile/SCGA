@@ -10,9 +10,6 @@ Crossover <- function(APPLY,control,elitismSigma, feature, fitness,newPop,sigma,
 
   CrossPool  <- control$selection(fitness, poolSize, tsize = control$tournamentSize)  # matrix ncol=2 nrow size/2 indicating the couples to make crossover
 
-
-
-
   ########## Crossover for the hyperparamters of the mutation
 
   t.sigma                                                <- t(apply(CrossPool, 1, CrossSigma, sigma, feature, fitness)) # store temporary the generated hp the number is equal to the number of couples

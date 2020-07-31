@@ -161,7 +161,7 @@ Initialise <- function(control = list(),...) {
   }
 
   ####### Ridefine objective function  ########
-  evaluateFun <- makeEvaluateFun(control)
+  evaluateFun <- makeEvaluateFun(control,SAPPLY,...)
   mutRate     <- control$mutRate
 
   return(list(
@@ -266,7 +266,7 @@ createControl <- function(control) {
     size                    = 30,                       # Size of population
     target                  = -Inf,                     # best value achievable
     # tournamentSize          = 6,
-    updateSigma             = FALSE,
+    updateSigma             = TRUE,
     useCrossover            = TRUE,
     vectorOnly              = FALSE,                    # pass only the values to the obj
     vectorized              = FALSE,                    # the obj accepts all the candidates togheter
@@ -342,7 +342,7 @@ createControl <- function(control) {
 initializeConditions <- function()list(mainLoop = c(budgetOver=FALSE,targetReached=FALSE),stalling=c(reinitialise=FALSE,localOptimisation=FALSE) )
 
 ####### Ridefine objective function  ########
-makeEvaluateFun <- function(control){
+makeEvaluateFun <- function(control,SAPPLY,...){
   if(control$vectorized && control$vectorOnly )
     evaluateFun <- function(x,...) control$Fun(x[1:length(x)][,"value"],...)
 

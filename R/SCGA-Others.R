@@ -116,6 +116,7 @@ tourselection <- function(x,tsize){
   selected    <- Inf
   while (is.infinite(selected)) {
     tour      <- sample(length(x),tsize)
+
     winners   <- seq(1,length(x))[which(x==max(x[tour],na.rm = T))]
 
     if(length(winners)>1)
@@ -125,22 +126,56 @@ tourselection <- function(x,tsize){
 
     if(length(selected)>1)
       selected  <- Inf
-
   }
 
   return(selected)
 }
 
 selectpoolTournament<- function(fitness,size = (floor(length(fitness) / 2) + 1),tsize=max(ceiling(length(fitness)/10),2),...){
+if(!is.null(attr(fitness,"niechePop"))){
 
+  niechePop          <- attr(fitness,"niechePop")
+  insideWindow       <- !is.na(niechePop)
+
+  fitnessInWindow    <- fitness[insideWindow]
+  niechePopInWindow  <- niechePop[insideWindow]
+  uniqueNiches       <- unique(niechePopInWindow)
+  size               <- ceiling(size/length(uniqueNiches))
+
+  newPool            <- NULL
+  out <- sapply( uniqueNiches,
+                     function (i) {
+                       candInNieche <- which(niechePopInWindow==i)
+                       pool <- selectpoolTournament(fitnessInWindow[candInNieche],
+                                                       size=size,tsize=max(ceiling(length(fitnessInWindow[niechePopInWindow==i])/10),2))
+              out <- matrix(candInNieche[pool],ncol = 2)
+                       },simplify = F)
+for (i in seq_along(out)) {
+  newPool <- rbind(newPool,out[[i]])
+}
+  return(newPool)
+}
+
+  if(length(fitness)==2){
+    newpool=matrix(c(1,2),ncol=2,nrow=size,byrow = T)
+    warning("Only two candidates in tour selection",immediate. = T)
+    return(newpool)
+  }
+  if(length(fitness)==1){
+   browser()
+    warning("Only one candidates in tour selection",immediate. = T)
+    return(newpool)
+  }
   newpool=matrix(ncol=2,nrow=size)
+
   for (i in 1:size){
 
     newpool[i,1] =tourselection(fitness,tsize)
+    
     while ( is.na(newpool[i,2])) {
-
+   
       newpool[i,2] =tourselection(fitness[-newpool[i,1]],tsize)
-      # newpool[i,2]=ifelse(newpool[i,1]<newpool[i,2] ,newpool[i,2]+1,newpool[i,2])
+      newpool[i,2]=ifelse(newpool[i,1]<=newpool[i,2] ,newpool[i,2]+1,newpool[i,2])
       if(newpool[i,2]==newpool[i,1])
         newpool[i,2]=NA
     }
@@ -150,8 +185,6 @@ selectpoolTournament<- function(fitness,size = (floor(length(fitness) / 2) + 1),
 }
 
 selectPoolRouletteWheel <- function(fitness, size = (floor(length(fitness) / 2) + 1),...) {
-
-
 
   newpool=matrix(ncol=2,nrow=size) #initiliaze the matrix
   choices <- 1:length(fitness)    #create the indexes
