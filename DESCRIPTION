@@ -19,6 +19,6 @@ Imports:
     ggplot2,
     dplyr,
     bazar,
-    plotly
+    plotly,
     DescTools
 RoxygenNote: 6.1.1
